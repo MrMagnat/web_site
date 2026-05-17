@@ -40,6 +40,12 @@ RUN mkdir -p ./public/uploads/products && chown -R nextjs:nodejs ./public/upload
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy prisma for migrations (schema + migrations + CLI)
+COPY --from=builder /app/prisma ./prisma
+COPY --from=deps /app/node_modules/.bin/prisma /usr/local/bin/prisma
+COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
+COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+
 USER nextjs
 
 EXPOSE 3000
@@ -47,5 +53,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run Prisma migrations then start the app
-CMD ["node", "server.js"]
+# Запускаем миграции, затем приложение
+CMD ["sh", "-c", "prisma migrate deploy --schema prisma/schema.prisma && node server.js"]
