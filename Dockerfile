@@ -40,13 +40,12 @@ RUN mkdir -p ./public/uploads/products && chown -R nextjs:nodejs ./public/upload
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy prisma for migrations (schema + migrations + CLI)
-# Копируем из builder (после prisma generate), запускаем через node напрямую —
-# чтобы __dirname внутри пакета указывал на node_modules/prisma/build/,
-# а не на .bin/, иначе Prisma не найдёт @prisma/engines.
+# Copy prisma migrations schema
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy full node_modules — нужен Prisma CLI со всеми транзитивными зависимостями.
+# Standalone Next.js использует свои встроенные модули, эти нужны только для migrate.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
