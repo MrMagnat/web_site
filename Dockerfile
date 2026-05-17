@@ -41,11 +41,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy prisma for migrations (schema + migrations + CLI)
-# Важно: держим всё в /app/node_modules, чтобы Node находил @prisma/engines
+# Копируем из builder (после prisma generate), запускаем через node напрямую —
+# чтобы __dirname внутри пакета указывал на node_modules/prisma/build/,
+# а не на .bin/, иначе Prisma не найдёт @prisma/engines.
 COPY --from=builder /app/prisma ./prisma
-COPY --from=deps /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
-COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 USER nextjs
 
@@ -54,5 +55,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Запускаем миграции (через --url, без prisma.config.ts), затем приложение
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma --url $DATABASE_URL && node server.js"]
+# --url берёт DATABASE_URL из окружения контейнера (docker-compose.yml / .env)
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma --url $DATABASE_URL && node server.js"]
