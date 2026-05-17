@@ -53,5 +53,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Запускаем миграции, затем приложение
-CMD ["sh", "-c", "prisma migrate deploy --schema prisma/schema.prisma && node server.js"]
+# Запускаем миграции (через --url, без prisma.config.ts), затем приложение
+CMD ["sh", "-c", "prisma migrate deploy --schema prisma/schema.prisma --url $DATABASE_URL && node server.js"]
