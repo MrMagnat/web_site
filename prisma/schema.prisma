@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── КАТЕГОРИИ ────────────────────────────────────────────────────
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  nameRu      String
+  nameEn      String
+  image       String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+}
+
+// ─── ТОВАРЫ ───────────────────────────────────────────────────────
+model Product {
+  id              String    @id @default(cuid())
+  sku             String    @unique  // артикул
+  nameRu          String
+  nameEn          String
+  descriptionRu   String    @db.Text
+  descriptionEn   String    @db.Text
+  price           Float
+  discountPrice   Float?
+  images          String[]  // пути /uploads/products/...
+  sizes           String[]  // ["50x80", "40x60", "60x90"]
+  colors          Json      // [{ name: "Бежевый", hex: "#f5e6d3" }]
+  specsRu         Json      // { "Состав": "100% хлопок", "Уход": "..." }
+  specsEn         Json
+  isActive        Boolean   @default(true)
+  isNew           Boolean   @default(false)
+  isFeatured      Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  categoryId      String
+  category        Category  @relation(fields: [categoryId], references: [id])
+
+  analytics       ProductAnalytics[]
+  orderItems      OrderItem[]
+}
+
+// ─── АНАЛИТИКА ТОВАРОВ ─────────────────────────────────────────────
+model ProductAnalytics {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  views       Int      @default(0)
+  cartAdds    Int      @default(0)
+  date        DateTime @default(now()) @db.Date  // по дням
+
+  @@unique([productId, date])
+  @@index([productId])
+  @@index([date])
+}
+
+// ─── ПРОМОКОДЫ ────────────────────────────────────────────────────
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  discountPercent Int       // процент скидки (5, 10, 20...)
+  maxUses         Int?      // null = безлимит
+  usedCount       Int       @default(0)   // применён в заказе
+  appliedCount    Int       @default(0)   // применён в корзине
+  isActive        Boolean   @default(true)
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  orders          Order[]
+}
+
+// ─── ЗАКАЗЫ ───────────────────────────────────────────────────────
+model Order {
+  id              String      @id @default(cuid())
+  number          String      @unique  // AF-2026-0001
+  status          OrderStatus @default(PENDING)
+
+  // Покупатель
+  customerName    String
+  customerPhone   String
+  customerEmail   String
+
+  // Доставка
+  deliveryType    DeliveryType
+  deliveryAddress String?
+  pvzCode         String?      // код ПВЗ Ozon
+  pvzAddress      String?      // адрес ПВЗ
+
+  // Цены
+  subtotal        Float
+  discountAmount  Float        @default(0)
+  total           Float
+
+  // Промокод
+  promoCodeId     String?
+  promoCode       PromoCode?   @relation(fields: [promoCodeId], references: [id])
+
+  // Интеграции
+  kassaReceiptId  String?      // ID чека онлайн-кассы
+  ozonPostingId   String?      // ID отправления Ozon
+  ozonTrackingId  String?
+
+  // UTM (откуда пришёл заказ)
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  items           OrderItem[]
+  returns         Return[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  name        String  // snapshot на момент заказа
+  image       String
+  size        String?
+  color       String?
+  qty         Int
+  price       Float   // цена на момент заказа
+
+  @@index([orderId])
+}
+
+enum OrderStatus {
+  PENDING     // Новый
+  PAID        // Оплачен
+  PROCESSING  // В обработке
+  SHIPPED     // Передан в Ozon
+  DELIVERED   // Доставлен
+  CANCELLED   // Отменён
+  RETURNED    // Возврат
+}
+
+enum DeliveryType {
+  OZON_PVZ      // Самовывоз из ПВЗ Ozon
+  OZON_COURIER  // Курьер Ozon
+}
+
+// ─── ВОЗВРАТЫ ─────────────────────────────────────────────────────
+model Return {
+  id            String       @id @default(cuid())
+  number        String       @unique  // RET-2026-0001
+  orderId       String
+  order         Order        @relation(fields: [orderId], references: [id])
+  reason        String       @db.Text
+  returnMethod  String       @default("DIRECT")  // DIRECT | OZON
+  status        ReturnStatus @default(PENDING)
+  comment       String?      @db.Text  // комментарий менеджера
+  customerName  String?
+  customerEmail String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum ReturnStatus {
+  PENDING    // Новая
+  REVIEWING  // На рассмотрении
+  APPROVED   // Одобрена
+  REJECTED   // Отклонена
+}
+
+// ─── UTM-МЕТКИ ────────────────────────────────────────────────────
+model UTMTag {
+  id           String    @id @default(cuid())
+  name         String    // "Instagram Stories апрель"
+  source       String    // instagram, telegram, vk, wb
+  medium       String    // story, post, cpc, email
+  campaign     String    // название кампании
+  content      String?   // доп. параметр
+  term         String?   // ключевое слово
+  baseUrl      String    @default("/")
+  generatedUrl String    // финальный URL с UTM
+  qrCode       String?   // base64 QR-кода
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  clicks       UTMClick[]
+}
+
+model UTMClick {
+  id         String   @id @default(cuid())
+  utmTagId   String
+  utmTag     UTMTag   @relation(fields: [utmTagId], references: [id], onDelete: Cascade)
+  ip         String
+  userAgent  String?
+  referer    String?
+  timestamp  DateTime @default(now())
+
+  @@index([utmTagId])
+  @@index([timestamp])
+}
+
+// ─── АНАЛИТИКА САЙТА ──────────────────────────────────────────────
+model SiteVisit {
+  id          String   @id @default(cuid())
+  page        String
+  sessionId   String?  // уникальный ID сессии из localStorage (2ч TTL)
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  ip          String
+  userAgent   String?
+  timestamp   DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([sessionId])
+  @@index([page])
+}
+
+// ─── НАСТРОЙКИ ИНТЕГРАЦИЙ ─────────────────────────────────────────
+model Integration {
+  id        String   @id @default(cuid())
+  key       String   @unique  // "ozon_client_id", "kassa_login", etc.
+  value     String   @db.Text // зашифровано
+  updatedAt DateTime @updatedAt
+}
+
+// ─── ПОДПИСЧИКИ РАССЫЛКИ ──────────────────────────────────────────
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  locale    String   @default("ru")
+  createdAt DateTime @default(now())
+}
