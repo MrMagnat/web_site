@@ -40,12 +40,9 @@ RUN mkdir -p ./public/uploads/products && chown -R nextjs:nodejs ./public/upload
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy prisma migrations schema
-COPY --from=builder /app/prisma ./prisma
-
-# Copy full node_modules — нужен Prisma CLI со всеми транзитивными зависимостями.
-# Standalone Next.js использует свои встроенные модули, эти нужны только для migrate.
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Prisma Client генерируется в node_modules/.prisma/client — Next.js standalone
+# не всегда захватывает его автоматически, копируем явно
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
 USER nextjs
 
@@ -54,5 +51,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# --url берёт DATABASE_URL из окружения контейнера (docker-compose.yml / .env)
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma --url $DATABASE_URL && node server.js"]
+CMD ["node", "server.js"]
