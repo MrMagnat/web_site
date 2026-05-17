@@ -41,8 +41,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy prisma for migrations (schema + migrations + CLI)
+# Важно: держим всё в /app/node_modules, чтобы Node находил @prisma/engines
 COPY --from=builder /app/prisma ./prisma
-COPY --from=deps /app/node_modules/.bin/prisma /usr/local/bin/prisma
+COPY --from=deps /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 
@@ -54,4 +55,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Запускаем миграции (через --url, без prisma.config.ts), затем приложение
-CMD ["sh", "-c", "prisma migrate deploy --schema prisma/schema.prisma --url $DATABASE_URL && node server.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma --url $DATABASE_URL && node server.js"]
