@@ -1,26 +1,97 @@
 @import "tailwindcss";
 
+/* Шрифты бренда (фолбэк если Google Fonts недоступен) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-prata: "Prata", Georgia, "Times New Roman", serif;
+  --font-inter-tight: "Inter Tight", "Inter", system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter-tight);
+}
+
+.font-prata, [class*="font-prata"] {
+  font-family: var(--font-prata) !important;
+}
+
+:root {
+  --burgundy:     #3F1111;
+  --burgundy-l:   #5a1a1a;
+  --brand-black:  #191E1B;
+  --brand-white:  #FAFAFA;
+  --brand-beige:  #F7F0EC;
+  --brand-gray:   #9a9a9a;
+  --brand-border: #e8e0da;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--brand-white);
+    color: var(--brand-black);
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a { text-decoration: none; color: inherit; }
+  button { cursor: pointer; font-family: inherit; }
+
+  ::selection {
+    background: var(--burgundy);
+    color: var(--brand-white);
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--brand-beige); }
+  ::-webkit-scrollbar-thumb { background: var(--burgundy); border-radius: 2px; }
+}
+
+@layer utilities {
+  .font-prata { font-family: var(--font-prata, Georgia, serif); }
+
+  .text-label {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--brand-gray);
+  }
+
+  .link-animated {
+    position: relative;
+    display: inline-block;
+  }
+  .link-animated::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 100%;
+    height: 1px;
+    background: currentColor;
+    transition: right 0.3s ease;
+  }
+  .link-animated:hover::after { right: 0; }
+
+  .fade-up {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .img-fill {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 }

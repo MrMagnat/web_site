@@ -1,0 +1,95 @@
+import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
+
+export default function Footer() {
+  const t      = useTranslations("footer");
+  const locale = useLocale();
+  const prefix = locale === "ru" ? "" : "/en";
+
+  return (
+    <footer className="bg-[#191E1B] text-white/55 pt-16 pb-8 px-12">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-14">
+
+          {/* Brand */}
+          <div>
+            <p className="font-prata text-[17px] tracking-[0.14em] uppercase text-white mb-4">
+              Андруа Фамиль
+            </p>
+            <p className="text-[13px] leading-[1.75] text-white/45 max-w-[220px]">
+              Бренд домашнего текстиля. Создаём уют и комфорт в каждом доме.
+            </p>
+          </div>
+
+          {/* Buyers */}
+          <div>
+            <h4 className="text-[10px] tracking-[0.22em] uppercase text-white/35 mb-5">
+              {t("buyers")}
+            </h4>
+            <ul className="space-y-2.5 list-none">
+              {(["delivery", "return", "sizes", "care"] as const).map((k) => (
+                <li key={k}>
+                  <Link
+                    href={k === "return" ? `${prefix}/return` : `${prefix}/`}
+                    className="text-[13px] text-white/55 hover:text-white transition-colors duration-200"
+                  >
+                    {t(`links.${k}`)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* About */}
+          <div>
+            <h4 className="text-[10px] tracking-[0.22em] uppercase text-white/35 mb-5">
+              {t("about")}
+            </h4>
+            <ul className="space-y-2.5 list-none">
+              {(["company", "values", "partner", "telegram", "contacts"] as const).map((k) => (
+                <li key={k}>
+                  <Link
+                    href={
+                      k === "telegram" ? "https://t.me/Andrua_famil" :
+                      (k === "company" || k === "values") ? `${prefix}/about` :
+                      `${prefix}/`
+                    }
+                    className="text-[13px] text-white/55 hover:text-white transition-colors duration-200"
+                    target={k === "telegram" ? "_blank" : undefined}
+                  >
+                    {t(`links.${k}`)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Legal info */}
+        <div className="border-t border-white/8 pt-6 mb-4">
+          <p className="text-[11px] text-white/25 leading-relaxed">
+            ИП Папян Артём Арменович&nbsp;&nbsp;·&nbsp;&nbsp;
+            ИНН&nbsp;771892840474&nbsp;&nbsp;·&nbsp;&nbsp;
+            Юридический адрес: 368622, Респ. Дагестан, р-н Дербентский, с. Чинар, ул. Маяковского, д. 6
+          </p>
+        </div>
+
+        {/* Bottom */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-[12px] text-white/30">{t("rights")}</p>
+          <div className="flex gap-5">
+            {(["Telegram", "ВКонтакте", "Wildberries"] as const).map((s) => (
+              <a
+                key={s}
+                href="#"
+                className="text-[11px] tracking-[0.14em] uppercase text-white/40 hover:text-white transition-colors duration-200"
+              >
+                {s}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

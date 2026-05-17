@@ -1,0 +1,143 @@
+{
+  "nav": {
+    "catalog":  "Catalog",
+    "collections": "Collections",
+    "about":    "About",
+    "delivery": "Shipping & Returns",
+    "cart":     "Cart",
+    "search":   "Search"
+  },
+  "hero": {
+    "tag":   "New Collection · Spring 2026",
+    "title": "At home with us\ncozy and beautiful",
+    "cta":   "Shop the collection"
+  },
+  "marquee": [
+    "Free shipping from ₽3,000",
+    "300+ products in catalog",
+    "Shipping across Russia",
+    "Delivery to Belarus, Armenia, Kazakhstan",
+    "14-day returns",
+    "Pay on delivery"
+  ],
+  "categories": {
+    "title":  "Categories",
+    "viewAll": "View all"
+  },
+  "products": {
+    "title":      "Popular products",
+    "viewAll":    "View all →",
+    "quickView":  "Quick view",
+    "addToCart":  "Add to cart",
+    "inCart":     "In cart",
+    "hit":        "Bestseller",
+    "new":        "New",
+    "sale":       "Sale",
+    "size":       "Size",
+    "color":      "Color",
+    "sku":        "SKU",
+    "specs":      "Specifications"
+  },
+  "cart": {
+    "title":      "Cart",
+    "empty":      "Your cart is empty",
+    "emptyHint":  "Browse the catalog to add items",
+    "toCatalog":  "Go to catalog",
+    "subtotal":   "Subtotal",
+    "discount":   "Discount",
+    "total":      "Total",
+    "promo":      "Promo code",
+    "promoApply": "Apply",
+    "checkout":   "Checkout",
+    "delivery":   "Shipping calculated at checkout"
+  },
+  "checkout": {
+    "title":        "Checkout",
+    "step1":        "Contact",
+    "step2":        "Delivery",
+    "step3":        "Payment",
+    "name":         "Full name",
+    "phone":        "Phone",
+    "email":        "Email",
+    "deliveryType": "Delivery method",
+    "pvz":          "Ozon pickup point",
+    "courier":      "Ozon courier",
+    "choosePvz":    "Choose pickup point on map",
+    "address":      "Delivery address",
+    "pay":          "Pay now",
+    "agreement":    "By clicking \"Pay now\" you agree to the terms"
+  },
+  "order": {
+    "success":    "Order placed!",
+    "number":     "Order number",
+    "receipt":    "Receipt sent to your email",
+    "tracking":   "Track order",
+    "continue":   "Continue shopping"
+  },
+  "return": {
+    "title":      "Return item",
+    "subtitle":   "Fill in the form and we'll get back to you within 24 hours",
+    "orderNum":   "Order number",
+    "reason":     "Reason for return",
+    "submit":     "Submit request",
+    "success":    "Request received! We'll be in touch."
+  },
+  "story": {
+    "label":  "About",
+    "quote":  "We create home textiles that unite aesthetics, quality and comfort",
+    "text1":  "Andrua Famil is a home textile brand focused on creating cozy and comfortable living spaces.",
+    "text2":  "Sales have grown more than 10x over the past year. We ship across Russia and neighbouring countries.",
+    "cta":    "Learn more"
+  },
+  "features": {
+    "delivery":  { "title": "Fast delivery",      "text": "Courier or Ozon pickup across Russia, from 1 day" },
+    "quality":   { "title": "Quality guarantee",  "text": "All materials are certified and quality-checked" },
+    "return":    { "title": "14-day returns",     "text": "Didn't work out? We'll take it back, no questions asked" },
+    "support":   { "title": "Support 7/7",        "text": "We reply on Telegram within an hour, any day" }
+  },
+  "newsletter": {
+    "label":       "Newsletter",
+    "title":       "Be the first to know",
+    "subtitle":    "Get notified about new arrivals and promotions",
+    "placeholder": "Your email",
+    "submit":      "Subscribe"
+  },
+  "footer": {
+    "catalog":  "Catalog",
+    "buyers":   "Customers",
+    "about":    "About",
+    "rights":   "© 2026 Andrua Famil. All rights reserved.",
+    "links": {
+      "rugs":       "Bathroom rugs",
+      "bedding":    "Bedding",
+      "towels":     "Towels",
+      "decor":      "Home decor",
+      "new":        "New arrivals",
+      "delivery":   "Shipping & payment",
+      "return":     "Returns",
+      "sizes":      "Size guide",
+      "care":       "Care instructions",
+      "company":    "About us",
+      "values":     "Our values",
+      "partner":    "Partnership",
+      "telegram":   "Telegram",
+      "contacts":   "Contact"
+    }
+  },
+  "catalog": {
+    "title":       "Catalog",
+    "allCats":     "All categories",
+    "sortBy":      "Sort by",
+    "sort": {
+      "new":       "New arrivals",
+      "priceAsc":  "Price: low to high",
+      "priceDesc": "Price: high to low",
+      "popular":   "Popular"
+    },
+    "noProducts":  "No products found",
+    "filters":     "Filters",
+    "priceRange":  "Price",
+    "showFilters": "Show filters",
+    "clear":       "Clear"
+  }
+}
