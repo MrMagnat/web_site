@@ -1,64 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { randomUUID } from "crypto";
 
 function checkAdminHeader(request: NextRequest): boolean {
   return request.headers.get("x-admin") === "true";
-}
-
-// ─── YooKassa helper ─────────────────────────────────────────────────────────
-async function createYooKassaPayment(params: {
-  amount: number;
-  orderId: string;
-  orderNumber: string;
-  description: string;
-  returnUrl: string;
-}): Promise<{ confirmationUrl: string; paymentId: string } | null> {
-  // Читаем ключи из БД (зашифрованы)
-  const { shopId, secretKey } = await getYooKassaCreds();
-
-  if (!shopId || !secretKey) return null;   // ЮКасса не настроена — продолжаем без оплаты
-
-  const body = {
-    amount: {
-      value: params.amount.toFixed(2),
-      currency: "RUB",
-    },
-    capture: true,
-    confirmation: {
-      type: "redirect",
-      return_url: params.returnUrl,
-    },
-    description: params.description,
-    metadata: {
-      orderId: params.orderId,
-      orderNumber: params.orderNumber,
-    },
-  };
-
-  const credentials = Buffer.from(`${shopId}:${secretKey}`).toString("base64");
-
-  const res = await fetch("https://api.yookassa.ru/v3/payments", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      "Content-Type": "application/json",
-      "Idempotence-Key": randomUUID(),
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("YooKassa createPayment error:", res.status, err);
-    return null;
-  }
-
-  const data = await res.json();
-  return {
-    paymentId: data.id,
-    confirmationUrl: data.confirmation?.confirmation_url ?? null,
-  };
 }
 
 // ─── POST /api/orders ─────────────────────────────────────────────────────────
