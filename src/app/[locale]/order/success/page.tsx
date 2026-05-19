@@ -63,17 +63,6 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
 
           {/* Actions */}
           <div className="flex flex-col items-center gap-4">
-            {/* Tracking placeholder */}
-            <button
-              className="w-full max-w-xs border border-[#191E1B] text-[#191E1B] text-[12px] tracking-[0.16em] uppercase py-3.5 hover:bg-[#191E1B] hover:text-white transition-colors"
-              onClick={() => {
-                // Tracking integration placeholder
-                alert("Трекинг заказа будет доступен после отправки");
-              }}
-            >
-              Трекинг заказа
-            </button>
-
             <Link
               href="/catalog"
               className="w-full max-w-xs block bg-[#3F1111] text-white text-[12px] tracking-[0.18em] uppercase py-3.5 hover:bg-[#5a1a1a] transition-colors text-center"
