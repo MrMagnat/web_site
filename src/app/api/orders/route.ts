@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
     const customerName    = body.customerName    ?? body.customer?.name;
     const customerPhone   = body.customerPhone   ?? body.customer?.phone;
     const customerEmail   = body.customerEmail   ?? body.customer?.email;
-    const deliveryType    = body.deliveryType    ?? body.delivery?.type;
+    const deliveryTypeRaw = body.deliveryType ?? body.delivery?.type ?? "";
+    // Normalize frontend kebab-case to Prisma enum (e.g. "ozon-pvz" → "OZON_PVZ")
+    const deliveryType = deliveryTypeRaw.toUpperCase().replace(/-/g, "_");
     const deliveryAddress = body.deliveryAddress ?? body.delivery?.address;
     const pvzCode         = body.pvzCode;
     const pvzAddress      = body.pvzAddress;
@@ -109,8 +111,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("POST /api/orders error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("POST /api/orders error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
