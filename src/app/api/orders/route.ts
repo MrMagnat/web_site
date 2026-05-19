@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getYooKassaCreds } from "@/lib/integrations";
 import { randomUUID } from "crypto";
 
 function checkAdminHeader(request: NextRequest): boolean {
@@ -161,37 +160,8 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    // ── Создаём платёж в ЮКассе ────────────────────────────────────────────
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const returnUrl = `${siteUrl}/order/success?num=${orderNumber}`;
-
-    const payment = await createYooKassaPayment({
-      amount: total,
-      orderId: order.id,
-      orderNumber,
-      description: `Заказ ${orderNumber} · Андруа Фамиль`,
-      returnUrl,
-    }).catch((err) => {
-      console.error("YooKassa payment creation failed:", err);
-      return null;
-    });
-
-    // Сохраняем yookassaPaymentId если платёж создан
-    if (payment?.paymentId) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { kassaReceiptId: payment.paymentId },
-      }).catch(() => {});
-    }
-
     return NextResponse.json(
-      {
-        ok: true,
-        orderId: order.id,
-        orderNumber: order.number,
-        // Если ЮКасса настроена — возвращаем URL для редиректа
-        confirmationUrl: payment?.confirmationUrl ?? null,
-      },
+      { ok: true, orderId: order.id, orderNumber: order.number },
       { status: 201 }
     );
   } catch (error) {
