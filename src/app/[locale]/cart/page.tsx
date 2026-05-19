@@ -25,6 +25,45 @@ interface FormErrors {
   address?: string;
 }
 
+function Field({
+  label,
+  name,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  placeholder?: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors ${
+          error
+            ? "border-[#3F1111]"
+            : "border-[#e8e0da] focus:border-[#191E1B]"
+        }`}
+      />
+      {error && <p className="mt-1 text-[11px] text-[#3F1111]">{error}</p>}
+    </div>
+  );
+}
+
 export default function CartPage() {
   const {
     items,
@@ -165,43 +204,6 @@ export default function CartPage() {
       setSubmitting(false);
     }
   };
-
-  const Field = ({
-    label,
-    name,
-    type = "text",
-    placeholder,
-    value,
-    onChange,
-    error,
-  }: {
-    label: string;
-    name: string;
-    type?: string;
-    placeholder?: string;
-    value: string;
-    onChange: (v: string) => void;
-    error?: string;
-  }) => (
-    <div>
-      <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors ${
-          error
-            ? "border-[#3F1111]"
-            : "border-[#e8e0da] focus:border-[#191E1B]"
-        }`}
-      />
-      {error && <p className="mt-1 text-[11px] text-[#3F1111]">{error}</p>}
-    </div>
-  );
 
   if (items.length === 0 && step === 1) {
     return (
