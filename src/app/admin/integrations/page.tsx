@@ -306,22 +306,50 @@ export default function AdminIntegrationsPage() {
           </button>
           {sections.find((s) => s.id === "ozon")?.expanded && (
             <div className="px-5 pb-5 border-t" style={{ borderColor: "#F7F0EC" }}>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+
+              {/* Info */}
+              <div
+                className="mt-4 mb-5 px-4 py-3 rounded-lg flex gap-3"
+                style={{ background: "#F7F0EC", borderLeft: "3px solid #3F1111" }}
+              >
+                <Info size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#3F1111" }} />
+                <div className="text-[12px] leading-relaxed" style={{ color: "#9a9a9a" }}>
+                  <p className="font-medium mb-0.5" style={{ color: "#191E1B" }}>
+                    Ключи Ozon Seller API
+                  </p>
+                  <p>
+                    Найти в{" "}
+                    <a
+                      href="https://seller.ozon.ru/app/settings/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                      style={{ color: "#3F1111" }}
+                    >
+                      Личном кабинете Ozon Seller
+                    </a>{" "}
+                    → Настройки → API ключи.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelStyle} style={{ color: "#191E1B" }}>
-                    Client ID
+                    Client ID (ID продавца)
                   </label>
                   <input
                     type="text"
                     value={ozonClientId}
                     onChange={(e) => setOzonClientId(e.target.value)}
+                    placeholder="123456"
                     className={inputCls}
                     style={inputStyle}
                   />
                 </div>
                 <div>
                   <label className={labelStyle} style={{ color: "#191E1B" }}>
-                    API Key
+                    API Key (ключ продавца)
                   </label>
                   <input
                     type="password"
@@ -333,6 +361,7 @@ export default function AdminIntegrationsPage() {
                   />
                 </div>
               </div>
+
               <div className="flex items-center gap-3 mt-4">
                 <button
                   onClick={saveOzon}
@@ -340,7 +369,7 @@ export default function AdminIntegrationsPage() {
                   className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
                   style={{ background: "#3F1111", color: "#FAFAFA" }}
                 >
-                  {ozonSaving ? "Сохранение..." : "Сохранить"}
+                  {ozonSaving ? "Сохранение..." : "Сохранить ключи"}
                 </button>
                 {ozonMsg && (
                   <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>

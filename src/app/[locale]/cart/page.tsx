@@ -16,6 +16,7 @@ interface FormData {
   email: string;
   deliveryType: DeliveryType;
   address: string;
+  pvzAddress: string;
 }
 
 interface FormErrors {
@@ -23,6 +24,7 @@ interface FormErrors {
   phone?: string;
   email?: string;
   address?: string;
+  pvzAddress?: string;
 }
 
 function Field({
@@ -86,6 +88,7 @@ export default function CartPage() {
     email: "",
     deliveryType: "ozon-pvz",
     address: "",
+    pvzAddress: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [promoInput, setPromoInput] = useState("");
@@ -144,6 +147,9 @@ export default function CartPage() {
     if (form.deliveryType === "ozon-courier" && !form.address.trim()) {
       errs.address = "Введите адрес доставки";
     }
+    if (form.deliveryType === "ozon-pvz" && !form.pvzAddress.trim()) {
+      errs.pvzAddress = "Введите адрес пункта выдачи";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -168,8 +174,9 @@ export default function CartPage() {
           },
           delivery: {
             type: form.deliveryType,
-            address: form.address,
+            address: form.deliveryType === "ozon-courier" ? form.address : undefined,
           },
+          pvzAddress: form.deliveryType === "ozon-pvz" ? form.pvzAddress : undefined,
           items: items.map((i) => ({
             productId: i.productId,
             name: i.name,
@@ -402,7 +409,7 @@ export default function CartPage() {
                             className="sr-only"
                             value={opt.value}
                             checked={form.deliveryType === opt.value}
-                            onChange={() => setForm({ ...form, deliveryType: opt.value, address: "" })}
+                            onChange={() => setForm({ ...form, deliveryType: opt.value, address: "", pvzAddress: "" })}
                           />
                           <p className="text-[14px] font-medium text-[#191E1B]">{opt.label}</p>
                           <p className="text-[12px] text-[#9a9a9a] mt-0.5">{opt.desc}</p>
@@ -412,9 +419,41 @@ export default function CartPage() {
                   </div>
 
                   {form.deliveryType === "ozon-pvz" ? (
-                    <div className="border border-dashed border-[#e8e0da] p-6 text-center bg-[#F7F0EC]">
-                      <p className="text-[12px] text-[#9a9a9a] tracking-wide">Карта ПВЗ Ozon будет здесь</p>
-                      <p className="text-[11px] text-[#9a9a9a] mt-1 opacity-60">(Интеграция с Ozon API)</p>
+                    <div className="space-y-3">
+                      <div className="bg-[#F7F0EC] border border-[#e8e0da] px-4 py-3 flex items-start gap-3">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9a9a" strokeWidth="1.5" className="flex-shrink-0 mt-0.5">
+                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <p className="text-[12px] text-[#9a9a9a] leading-relaxed">
+                          Найдите ближайший пункт выдачи на{" "}
+                          <a
+                            href="https://www.ozon.ru/my/servicepoints"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#3F1111] underline underline-offset-2"
+                          >
+                            ozon.ru/my/servicepoints
+                          </a>{" "}
+                          и вставьте его адрес ниже.
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
+                          Адрес пункта выдачи Ozon
+                        </label>
+                        <input
+                          type="text"
+                          value={form.pvzAddress}
+                          onChange={(e) => setForm({ ...form, pvzAddress: e.target.value })}
+                          placeholder="Город, улица, дом — пункт выдачи Ozon"
+                          className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors ${
+                            errors.pvzAddress ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
+                          }`}
+                        />
+                        {errors.pvzAddress && (
+                          <p className="mt-1 text-[11px] text-[#3F1111]">{errors.pvzAddress}</p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div>
