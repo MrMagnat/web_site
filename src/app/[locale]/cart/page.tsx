@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Minus, Trash2, Tag, X, ChevronRight, Check } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+
+const PvzMap = dynamic(() => import("@/components/shop/PvzMap"), { ssr: false });
 
 type Step = 1 | 2 | 3;
 type DeliveryType = "ozon-pvz" | "ozon-courier";
@@ -420,32 +423,20 @@ export default function CartPage() {
 
                   {form.deliveryType === "ozon-pvz" ? (
                     <div className="space-y-3">
-                      <div className="bg-[#F7F0EC] border border-[#e8e0da] px-4 py-3 flex items-start gap-3">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9a9a" strokeWidth="1.5" className="flex-shrink-0 mt-0.5">
-                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        <p className="text-[12px] text-[#9a9a9a] leading-relaxed">
-                          Найдите ближайший пункт выдачи на{" "}
-                          <a
-                            href="https://www.ozon.ru/my/servicepoints"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#3F1111] underline underline-offset-2"
-                          >
-                            ozon.ru/my/servicepoints
-                          </a>{" "}
-                          и вставьте его адрес ниже.
-                        </p>
-                      </div>
+                      {/* Map */}
+                      <PvzMap
+                        onSelect={(addr) => setForm((f) => ({ ...f, pvzAddress: addr }))}
+                      />
+                      {/* Selected address display / manual input */}
                       <div>
                         <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
-                          Адрес пункта выдачи Ozon
+                          Выбранный пункт выдачи
                         </label>
                         <input
                           type="text"
                           value={form.pvzAddress}
-                          onChange={(e) => setForm({ ...form, pvzAddress: e.target.value })}
-                          placeholder="Город, улица, дом — пункт выдачи Ozon"
+                          onChange={(e) => setForm((f) => ({ ...f, pvzAddress: e.target.value }))}
+                          placeholder="Выберите точку на карте или введите адрес вручную"
                           className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors ${
                             errors.pvzAddress ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
                           }`}
