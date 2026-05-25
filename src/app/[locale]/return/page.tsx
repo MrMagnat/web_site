@@ -90,10 +90,10 @@ export default function ReturnPage() {
               <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-[#F7F0EC] flex items-center justify-center">
                 <CheckCircle size={28} strokeWidth={1.5} className="text-[#3F1111]" />
               </div>
-              <h2 className="font-prata text-[28px] text-[#191E1B] mb-2">Заявка принята</h2>
-              <p className="text-[14px] text-[#9a9a9a]">
-                Ответ придёт на{" "}
-                <span className="text-[#191E1B] font-medium">{submitted.email}</span> в течение 24 часов
+              <h2 className="font-prata text-[28px] text-[#191E1B] mb-2">Заявка отправлена</h2>
+              <p className="text-[14px] text-[#9a9a9a] leading-relaxed">
+                Менеджер рассмотрит вашу заявку и свяжется с вами по адресу{" "}
+                <span className="text-[#191E1B] font-medium">{submitted.email}</span>
               </p>
             </div>
 
@@ -106,7 +106,7 @@ export default function ReturnPage() {
                 <p className="font-prata text-[22px] tracking-[0.06em]">{submitted.returnNumber}</p>
               </div>
               <p className="text-[11px] text-white/40 text-right leading-relaxed">
-                Сохраните номер<br />для отслеживания
+                Укажите номер<br />при переписке
               </p>
             </div>
 
