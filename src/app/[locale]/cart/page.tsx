@@ -8,7 +8,7 @@ import { useCartStore } from "@/store/cart";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
-const PvzMap = dynamic(() => import("@/components/shop/PvzMap"), { ssr: false });
+const PvzSearch = dynamic(() => import("@/components/shop/PvzSearch"), { ssr: false });
 
 type Step = 1 | 2 | 3;
 type DeliveryType = "ozon-pvz" | "ozon-courier";
@@ -422,30 +422,11 @@ export default function CartPage() {
                   </div>
 
                   {form.deliveryType === "ozon-pvz" ? (
-                    <div className="space-y-3">
-                      {/* Map */}
-                      <PvzMap
-                        onSelect={(addr) => setForm((f) => ({ ...f, pvzAddress: addr }))}
-                      />
-                      {/* Selected address display / manual input */}
-                      <div>
-                        <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
-                          Выбранный пункт выдачи
-                        </label>
-                        <input
-                          type="text"
-                          value={form.pvzAddress}
-                          onChange={(e) => setForm((f) => ({ ...f, pvzAddress: e.target.value }))}
-                          placeholder="Выберите точку на карте или введите адрес вручную"
-                          className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors ${
-                            errors.pvzAddress ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
-                          }`}
-                        />
-                        {errors.pvzAddress && (
-                          <p className="mt-1 text-[11px] text-[#3F1111]">{errors.pvzAddress}</p>
-                        )}
-                      </div>
-                    </div>
+                    <PvzSearch
+                      value={form.pvzAddress}
+                      onChange={(v) => setForm((f) => ({ ...f, pvzAddress: v }))}
+                      error={errors.pvzAddress}
+                    />
                   ) : (
                     <div>
                       <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
