@@ -88,14 +88,15 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
           </Link>
 
           {/* Search */}
-          <button
+          <Link
+            href={`/${locale}/catalog`}
             className={`transition-colors duration-300 ${
               isLight ? "text-white/80 hover:text-white" : "text-[#9a9a9a] hover:text-[#191E1B]"
             }`}
             title={t("search")}
           >
             <Search size={18} strokeWidth={1.5} />
-          </button>
+          </Link>
 
           {/* Cart */}
           <button

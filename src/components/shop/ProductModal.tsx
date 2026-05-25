@@ -145,6 +145,7 @@ export default function ProductModal({ product, onClose, locale }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={name}
+        onClick={onClose}
       >
         <div
           className="relative bg-[#FAFAFA] w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl animate-fade-up"
