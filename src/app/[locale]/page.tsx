@@ -125,14 +125,26 @@ export default async function HomePage() {
   const prefix = locale === "ru" ? "" : "/en";
   const isRu   = locale === "ru";
 
-  // Read hero settings from DB
-  const heroRows = await prisma.integration.findMany({
-    where: { key: { in: ["hero_type", "hero_url"] } },
+  // Read hero + banner settings from DB
+  const settingRows = await prisma.integration.findMany({
+    where: { key: { in: [
+      "hero_type", "hero_url",
+      "banner_image", "banner_tag", "banner_title_1", "banner_title_2",
+      "banner_subtitle", "banner_cta",
+    ] } },
   });
-  const heroSettings: Record<string, string> = {};
-  for (const r of heroRows) heroSettings[r.key] = r.value;
-  const heroType = heroSettings["hero_type"] ?? "video";
-  const heroUrl  = heroSettings["hero_url"]  ?? "/dacha-desk.mp4";
+  const s: Record<string, string> = {};
+  for (const r of settingRows) s[r.key] = r.value;
+
+  const heroType = s["hero_type"] ?? "video";
+  const heroUrl  = s["hero_url"]  ?? "/dacha-desk.mp4";
+
+  const bannerImage    = s["banner_image"]    ?? "https://images.unsplash.com/photo-1618220048045-10a6dbdf53e0?auto=format&fit=crop&w=1920&q=80";
+  const bannerTag      = s["banner_tag"]      ?? "Весна · Лето 2026";
+  const bannerTitle1   = s["banner_title_1"]  ?? "Новая коллекция";
+  const bannerTitle2   = s["banner_title_2"]  ?? "уже в каталоге";
+  const bannerSubtitle = s["banner_subtitle"] ?? "Скидки до 30% на выбранные позиции";
+  const bannerCta      = s["banner_cta"]      ?? "Смотреть каталог";
 
   // Fetch categories with products from DB (graceful fallback)
   let showcaseCategories: ShowcaseCategory[] = FALLBACK;
@@ -375,7 +387,7 @@ export default async function HomePage() {
       <div className="relative h-[460px] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://images.unsplash.com/photo-1618220048045-10a6dbdf53e0?auto=format&fit=crop&w=1920&q=80"
+          src={bannerImage}
           alt="Коллекция"
           className="w-full h-full object-cover"
         />
@@ -387,31 +399,28 @@ export default async function HomePage() {
             className="text-[10px] tracking-[0.28em] uppercase mb-4"
             style={{ color: "rgba(255,255,255,0.55)" }}
           >
-            Весна · Лето 2026
+            {bannerTag}
           </p>
           <h2
             className="font-prata text-[clamp(26px,4vw,50px)] leading-[1.15] mb-3 max-w-[620px]"
             style={{ color: "#fff" }}
           >
-            Новая коллекция
+            {bannerTitle1}
             <br />
-            уже в каталоге
+            {bannerTitle2}
           </h2>
           <p
             className="text-[13px] tracking-[0.08em] mb-9"
             style={{ color: "rgba(255,255,255,0.65)" }}
           >
-            Скидки до 30% на выбранные позиции
+            {bannerSubtitle}
           </p>
           <Link
             href={`${prefix}/catalog`}
             className="inline-flex items-center gap-3 text-[12px] tracking-[0.18em] uppercase border px-9 py-4 hover:gap-5 transition-all duration-300"
-            style={{
-              color: "#fff",
-              borderColor: "rgba(255,255,255,0.5)",
-            }}
+            style={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}
           >
-            Смотреть каталог
+            {bannerCta}
             <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
         </div>
