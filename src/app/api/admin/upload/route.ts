@@ -3,7 +3,10 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 function checkAdminAuth(request: NextRequest): boolean {
-  return request.headers.get("x-admin-key") === "admin-authenticated";
+  return (
+    request.headers.get("x-admin-key") === "admin-authenticated" ||
+    request.headers.get("x-admin") === "true"
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const filename = `${timestamp}-${originalName}`;
 
-    const subDir = type === "hero" ? "hero" : "products";
+    const subDir = (type === "hero" || type === "banner") ? "hero" : "products";
     const uploadDir = path.join(process.cwd(), "public", "uploads", subDir);
     await mkdir(uploadDir, { recursive: true });
 

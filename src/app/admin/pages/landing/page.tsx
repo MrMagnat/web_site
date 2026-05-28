@@ -50,10 +50,17 @@ export default function AdminLandingPage() {
   async function upload(file: File, type: "hero" | "banner"): Promise<string | null> {
     const fd = new FormData();
     fd.append("file", file);
+    // Do NOT include Content-Type — browser must set multipart/form-data with boundary automatically
+    const allHeaders = getAuthHeaders() as Record<string, string>;
+    const { "Content-Type": _ct, ...uploadHeaders } = allHeaders;
     const res = await fetch(`/api/admin/upload?type=${type}`, {
-      method: "POST", headers: getAuthHeaders(), body: fd,
+      method: "POST", headers: uploadHeaders, body: fd,
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("Upload error:", err);
+      return null;
+    }
     const data = await res.json();
     return data.url ?? null;
   }
