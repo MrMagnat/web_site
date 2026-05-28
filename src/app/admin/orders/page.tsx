@@ -24,6 +24,7 @@ interface Order {
   total: number;
   deliveryType: string;
   status: string;
+  ozonPostingId?: string | null;
   items: OrderItem[];
 }
 
@@ -66,6 +67,8 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [sendingOzon, setSendingOzon] = useState<string | null>(null);
+  const [ozonError, setOzonError] = useState<Record<string, string>>({});
 
   async function load(status?: string) {
     const headers = getAuthHeaders();
@@ -84,6 +87,27 @@ export default function AdminOrdersPage() {
     load(statusTab);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusTab]);
+
+  async function handleSendToOzon(orderId: string) {
+    setSendingOzon(orderId);
+    setOzonError({});
+    try {
+      const res = await fetch(`/api/admin/ozon/send-order/${orderId}`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await load(statusTab);
+      } else {
+        setOzonError((prev) => ({ ...prev, [orderId]: data.error }));
+      }
+    } catch {
+      setOzonError((prev) => ({ ...prev, [orderId]: "Ошибка соединения" }));
+    } finally {
+      setSendingOzon(null);
+    }
+  }
 
   async function handleStatusChange(orderId: string, newStatus: string) {
     setUpdatingId(orderId);
@@ -244,16 +268,54 @@ export default function AdminOrdersPage() {
                       >
                         <td colSpan={8} className="px-8 py-4">
                           <div className="flex gap-8">
-                            <div>
-                              <p className="text-xs font-semibold mb-2" style={{ color: "#9a9a9a" }}>
-                                Контакты
-                              </p>
-                              <p className="text-sm" style={{ color: "#191E1B" }}>
-                                {o.customerEmail}
-                              </p>
-                              <p className="text-sm" style={{ color: "#191E1B" }}>
-                                {o.customerPhone}
-                              </p>
+                            <div className="flex flex-col gap-4">
+                              <div>
+                                <p className="text-xs font-semibold mb-2" style={{ color: "#9a9a9a" }}>
+                                  Контакты
+                                </p>
+                                <p className="text-sm" style={{ color: "#191E1B" }}>
+                                  {o.customerEmail}
+                                </p>
+                                <p className="text-sm" style={{ color: "#191E1B" }}>
+                                  {o.customerPhone}
+                                </p>
+                              </div>
+
+                              {/* Ozon send button */}
+                              <div>
+                                <p className="text-xs font-semibold mb-2" style={{ color: "#9a9a9a" }}>
+                                  Ozon Логистика
+                                </p>
+                                {o.ozonPostingId ? (
+                                  <div>
+                                    <span
+                                      className="inline-block text-xs px-2.5 py-1 rounded-full font-medium mb-1"
+                                      style={{ background: "#d1fae5", color: "#065f46" }}
+                                    >
+                                      ✓ Отправлен в Ozon
+                                    </span>
+                                    <p className="text-xs font-mono" style={{ color: "#9a9a9a" }}>
+                                      {o.ozonPostingId}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleSendToOzon(o.id); }}
+                                      disabled={sendingOzon === o.id || o.status === "CANCELLED" || o.status === "RETURNED"}
+                                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                                      style={{ background: "#005BFF", color: "#fff" }}
+                                    >
+                                      {sendingOzon === o.id ? "Отправка…" : "→ Отправить в Ozon"}
+                                    </button>
+                                    {ozonError[o.id] && (
+                                      <p className="mt-1.5 text-xs leading-snug max-w-[220px]" style={{ color: "#ef4444" }}>
+                                        {ozonError[o.id]}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <div className="flex-1">
                               <p className="text-xs font-semibold mb-2" style={{ color: "#9a9a9a" }}>
