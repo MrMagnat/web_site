@@ -27,16 +27,26 @@ export default function Footer() {
               {t("buyers")}
             </h4>
             <ul className="space-y-2.5 list-none">
-              {(["delivery", "return", "sizes", "care"] as const).map((k) => (
-                <li key={k}>
-                  <Link
-                    href={k === "return" ? `${prefix}/return` : `${prefix}/`}
-                    className="text-[13px] text-white/55 hover:text-white transition-colors duration-200"
-                  >
-                    {t(`links.${k}`)}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link href={`${prefix}/info/delivery`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.delivery")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${prefix}/return`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.return")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${prefix}/info/size-guide`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.sizes")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${prefix}/info/care`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.care")}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -46,19 +56,26 @@ export default function Footer() {
               {t("about")}
             </h4>
             <ul className="space-y-2.5 list-none">
-              {(["company", "values", "partner", "contacts"] as const).map((k) => (
-                <li key={k}>
-                  <Link
-                    href={
-                      (k === "company" || k === "values") ? `${prefix}/about` :
-                      `${prefix}/`
-                    }
-                    className="text-[13px] text-white/55 hover:text-white transition-colors duration-200"
-                  >
-                    {t(`links.${k}`)}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link href={`${prefix}/info/about`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.company")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${prefix}/info/values`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.values")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${prefix}/info/partnership`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.partner")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`${prefix}/`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                  {t("links.contacts")}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
