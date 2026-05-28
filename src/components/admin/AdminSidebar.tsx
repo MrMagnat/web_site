@@ -12,6 +12,7 @@ import {
   BarChart2,
   Settings,
   LogOut,
+  FileText,
 } from "lucide-react";
 
 const NAV = [
@@ -23,6 +24,7 @@ const NAV = [
   { label: "UTM-метки", href: "/admin/utm", icon: Link2 },
   { label: "Аналитика", href: "/admin/analytics", icon: BarChart2 },
   { label: "Интеграции", href: "/admin/integrations", icon: Settings },
+  { label: "Страницы сайта", href: "/admin/pages", icon: FileText },
 ];
 
 export default function AdminSidebar() {

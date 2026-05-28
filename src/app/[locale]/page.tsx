@@ -125,6 +125,15 @@ export default async function HomePage() {
   const prefix = locale === "ru" ? "" : "/en";
   const isRu   = locale === "ru";
 
+  // Read hero settings from DB
+  const heroRows = await prisma.integration.findMany({
+    where: { key: { in: ["hero_type", "hero_url"] } },
+  });
+  const heroSettings: Record<string, string> = {};
+  for (const r of heroRows) heroSettings[r.key] = r.value;
+  const heroType = heroSettings["hero_type"] ?? "video";
+  const heroUrl  = heroSettings["hero_url"]  ?? "/dacha-desk.mp4";
+
   // Fetch categories with products from DB (graceful fallback)
   let showcaseCategories: ShowcaseCategory[] = FALLBACK;
   try {
@@ -191,22 +200,14 @@ export default async function HomePage() {
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section className="relative h-screen min-h-[600px] overflow-hidden">
         <div className="absolute inset-0">
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover scale-[1.02]"
-          >
-            <source src="/dacha-desk.mp4" type="video/mp4" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1555041469-9816c96b1716?auto=format&fit=crop&w=1920&q=85"
-              alt="Уютный интерьер"
-              className="w-full h-full object-cover"
-            />
-          </video>
+          {heroType === "video" ? (
+            <video autoPlay muted loop playsInline preload="auto" className="w-full h-full object-cover scale-[1.02]">
+              <source src={heroUrl} type="video/mp4" />
+            </video>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={heroUrl} alt="Главная страница" className="w-full h-full object-cover scale-[1.02]" />
+          )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#191E1B]/20 via-transparent to-[#191E1B]/60" />
 

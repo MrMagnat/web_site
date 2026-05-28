@@ -65,7 +65,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
                   key === "delivery" ? `${prefix}/return` :
                   `${prefix}/`
                 }
-                className={`text-[11px] tracking-[0.16em] uppercase transition-colors duration-300 link-animated ${
+                className={`text-[13px] tracking-[0.16em] uppercase transition-colors duration-300 link-animated ${
                   isLight ? "text-white/80 hover:text-white" : "text-[#9a9a9a] hover:text-[#191E1B]"
                 }`}
               >
@@ -150,7 +150,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
           <div className="mt-auto">
             <Link
               href={alternateLocaleUrl}
-              className="text-[11px] tracking-[0.2em] uppercase text-white/40"
+              className="text-[15px] tracking-[0.2em] uppercase text-white/40"
               onClick={() => setMobileOpen(false)}
             >
               {locale === "ru" ? "English" : "Русский"}

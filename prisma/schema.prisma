@@ -239,3 +239,11 @@ model Subscriber {
   locale    String   @default("ru")
   createdAt DateTime @default(now())
 }
+
+// ─── КОНТЕНТ СТРАНИЦ ──────────────────────────────────────────────
+model PageContent {
+  slug      String   @id   // "delivery", "return-policy", "size-guide", etc.
+  titleRu   String   @default("")
+  content   String   @db.Text @default("")  // HTML content
+  updatedAt DateTime @updatedAt
+}

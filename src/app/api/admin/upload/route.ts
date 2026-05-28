@@ -23,17 +23,19 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Sanitize filename
+    const type = (request.nextUrl?.searchParams?.get("type") ?? "products");
     const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const timestamp = Date.now();
     const filename = `${timestamp}-${originalName}`;
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "products");
+    const subDir = type === "hero" ? "hero" : "products";
+    const uploadDir = path.join(process.cwd(), "public", "uploads", subDir);
     await mkdir(uploadDir, { recursive: true });
 
     const filePath = path.join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    const url = `/uploads/products/${filename}`;
+    const url = `/uploads/${subDir}/${filename}`;
 
     return NextResponse.json({ url }, { status: 201 });
   } catch (error) {

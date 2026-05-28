@@ -46,16 +46,14 @@ export default function Footer() {
               {t("about")}
             </h4>
             <ul className="space-y-2.5 list-none">
-              {(["company", "values", "partner", "telegram", "contacts"] as const).map((k) => (
+              {(["company", "values", "partner", "contacts"] as const).map((k) => (
                 <li key={k}>
                   <Link
                     href={
-                      k === "telegram" ? "https://t.me/Andrua_famil" :
                       (k === "company" || k === "values") ? `${prefix}/about` :
                       `${prefix}/`
                     }
                     className="text-[13px] text-white/55 hover:text-white transition-colors duration-200"
-                    target={k === "telegram" ? "_blank" : undefined}
                   >
                     {t(`links.${k}`)}
                   </Link>
@@ -77,17 +75,6 @@ export default function Footer() {
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[12px] text-white/30">{t("rights")}</p>
-          <div className="flex gap-5">
-            {(["Telegram", "ВКонтакте", "Wildberries"] as const).map((s) => (
-              <a
-                key={s}
-                href="#"
-                className="text-[11px] tracking-[0.14em] uppercase text-white/40 hover:text-white transition-colors duration-200"
-              >
-                {s}
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

@@ -95,3 +95,16 @@ body {
     display: block;
   }
 }
+
+/* Prose styles for info pages */
+.prose-custom h2 { font-family: var(--font-prata, Georgia, serif); font-size: 22px; margin-bottom: 12px; margin-top: 32px; color: #191E1B; }
+.prose-custom h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; margin-top: 24px; color: #191E1B; }
+.prose-custom p { font-size: 14px; line-height: 1.8; color: #5a5a5a; margin-bottom: 16px; }
+.prose-custom ul, .prose-custom ol { padding-left: 20px; margin-bottom: 16px; }
+.prose-custom li { font-size: 14px; line-height: 1.8; color: #5a5a5a; margin-bottom: 6px; }
+.prose-custom table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px; }
+.prose-custom th { background: #F7F0EC; color: #191E1B; font-weight: 600; padding: 10px 14px; text-align: left; border: 1px solid #e8e0da; }
+.prose-custom td { padding: 9px 14px; border: 1px solid #e8e0da; color: #5a5a5a; }
+.prose-custom tr:nth-child(even) td { background: #FAFAFA; }
+.prose-custom a { color: #3F1111; text-decoration: underline; }
+.prose-custom strong { color: #191E1B; font-weight: 600; }
