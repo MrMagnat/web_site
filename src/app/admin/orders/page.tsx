@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 
 interface OrderItem {
   id: string;
@@ -69,6 +69,8 @@ export default function AdminOrdersPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingOzon, setSendingOzon] = useState<string | null>(null);
   const [ozonError, setOzonError] = useState<Record<string, string>>({});
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
 
   async function load(status?: string) {
     const headers = getAuthHeaders();
@@ -87,6 +89,29 @@ export default function AdminOrdersPage() {
     load(statusTab);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusTab]);
+
+  async function handleSyncStatuses() {
+    setSyncing(true);
+    setSyncMsg("");
+    try {
+      const res = await fetch("/api/admin/ozon/sync-statuses", {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMsg(data.message ?? "Готово");
+        await load(statusTab);
+      } else {
+        setSyncMsg(data.error ?? "Ошибка синхронизации");
+      }
+    } catch {
+      setSyncMsg("Ошибка соединения");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncMsg(""), 5000);
+    }
+  }
 
   async function handleSendToOzon(orderId: string) {
     setSendingOzon(orderId);
@@ -142,9 +167,26 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-6" style={{ color: "#191E1B" }}>
-        Заказы
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-semibold" style={{ color: "#191E1B" }}>Заказы</h1>
+        <div className="flex items-center gap-3">
+          {syncMsg && (
+            <span className="text-xs" style={{ color: syncMsg.includes("Ошибка") ? "#ef4444" : "#10b981" }}>
+              {syncMsg}
+            </span>
+          )}
+          <button
+            onClick={handleSyncStatuses}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-60 transition-colors"
+            style={{ background: "#F7F0EC", color: "#191E1B", border: "1px solid #e8e0da" }}
+            title="Обновить статусы заказов из Ozon"
+          >
+            <RefreshCw size={13} className={syncing ? "animate-spin" : ""} />
+            {syncing ? "Синхронизация..." : "Статусы из Ozon"}
+          </button>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 overflow-x-auto pb-1">

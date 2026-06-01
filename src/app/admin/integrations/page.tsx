@@ -25,16 +25,9 @@ interface IntegrationSection {
 export default function AdminIntegrationsPage() {
   const { getAuthHeaders } = useAdminAuth();
   const [sections, setSections] = useState<IntegrationSection[]>([
-    { id: "yookassa", title: "ЮКасса (оплата)", expanded: true },
-    { id: "ozon", title: "Ozon Логистика", expanded: false },
+    { id: "ozon", title: "Ozon Логистика", expanded: true },
     { id: "promo", title: "Промокоды", expanded: false },
   ]);
-
-  // YooKassa
-  const [shopId, setShopId] = useState("");
-  const [secretKey, setSecretKey] = useState("");
-  const [kassaSaving, setKassaSaving] = useState(false);
-  const [kassaMsg, setKassaMsg] = useState("");
 
   // Ozon
   const [ozonClientId, setOzonClientId] = useState("");
@@ -62,7 +55,6 @@ export default function AdminIntegrationsPage() {
       if (res.ok) {
         const d = await res.json();
         const intg = d.integrations ?? {};
-        if (intg.yookassa_shop_id) setShopId(intg.yookassa_shop_id);
         if (intg.ozon_client_id) setOzonClientId(intg.ozon_client_id);
       }
     }
@@ -88,28 +80,6 @@ export default function AdminIntegrationsPage() {
     if (id === "promo" && sections.find((s) => s.id === "promo" && !s.expanded)) {
       loadPromos();
     }
-  }
-
-  async function saveKassa() {
-    setKassaSaving(true);
-    const headers = getAuthHeaders();
-    await Promise.all([
-      shopId &&
-        fetch("/api/admin/integrations", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ key: "yookassa_shop_id", value: shopId }),
-        }),
-      secretKey &&
-        fetch("/api/admin/integrations", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ key: "yookassa_secret_key", value: secretKey }),
-        }),
-    ].filter(Boolean));
-    setKassaMsg("Сохранено");
-    setTimeout(() => setKassaMsg(""), 3000);
-    setKassaSaving(false);
   }
 
   async function saveOzon() {
@@ -211,106 +181,6 @@ export default function AdminIntegrationsPage() {
       </h1>
 
       <div className="flex flex-col gap-4">
-
-        {/* ── ЮКасса ─────────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <button
-            className="w-full flex items-center justify-between px-5 py-4 text-left"
-            onClick={() => toggleSection("yookassa")}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold" style={{ color: "#191E1B" }}>
-                ЮКасса
-              </span>
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full tracking-[0.1em] uppercase"
-                style={{ background: "#fef9c3", color: "#d97706" }}
-              >
-                Интеграция в разработке
-              </span>
-            </div>
-            {sections.find((s) => s.id === "yookassa")?.expanded ? (
-              <ChevronUp size={16} style={{ color: "#9a9a9a" }} />
-            ) : (
-              <ChevronDown size={16} style={{ color: "#9a9a9a" }} />
-            )}
-          </button>
-          {sections.find((s) => s.id === "yookassa")?.expanded && (
-            <div className="px-5 pb-5 border-t" style={{ borderColor: "#F7F0EC" }}>
-
-              {/* Info banner */}
-              <div
-                className="mt-4 mb-5 px-4 py-3 rounded-lg flex gap-3"
-                style={{ background: "#F7F0EC", borderLeft: "3px solid #3F1111" }}
-              >
-                <Info size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#3F1111" }} />
-                <div className="text-[12px] leading-relaxed" style={{ color: "#9a9a9a" }}>
-                  <p className="font-medium mb-0.5" style={{ color: "#191E1B" }}>
-                    Платёжная интеграция в разработке
-                  </p>
-                  <p>
-                    Сохраните ключи API заранее. Найти их можно в{" "}
-                    <a
-                      href="https://yookassa.ru/my"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                      style={{ color: "#3F1111" }}
-                    >
-                      личном кабинете ЮКассы
-                    </a>{" "}
-                    → Настройки → API.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelStyle} style={{ color: "#191E1B" }}>
-                    Shop ID
-                  </label>
-                  <input
-                    type="text"
-                    value={shopId}
-                    onChange={(e) => setShopId(e.target.value)}
-                    placeholder="123456"
-                    className={inputCls}
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label className={labelStyle} style={{ color: "#191E1B" }}>
-                    Secret Key
-                  </label>
-                  <input
-                    type="password"
-                    value={secretKey}
-                    onChange={(e) => setSecretKey(e.target.value)}
-                    placeholder="Оставьте пустым, чтобы не менять"
-                    className={inputCls}
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 mt-4">
-                <button
-                  onClick={saveKassa}
-                  disabled={kassaSaving}
-                  className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
-                  style={{ background: "#3F1111", color: "#FAFAFA" }}
-                >
-                  {kassaSaving ? "Сохранение..." : "Сохранить ключи"}
-                </button>
-                {kassaMsg && (
-                  <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>
-                    <Check size={14} /> {kassaMsg}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* ── Ozon ─────────────────────────────────────────────── */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">

@@ -198,13 +198,7 @@ export default function CartPage() {
       const data = await res.json();
       if (res.ok && data.orderNumber) {
         clearCart();
-        if (data.confirmationUrl) {
-          // ЮКасса настроена — редиректим на страницу оплаты
-          window.location.href = data.confirmationUrl;
-        } else {
-          // ЮКасса не настроена (dev/тест) — сразу на success
-          router.push(`/order/success?num=${data.orderNumber}`);
-        }
+        router.push(`/order/success?num=${data.orderNumber}`);
       } else {
         setSubmitError(data.error ?? "Ошибка при оформлении заказа. Попробуйте ещё раз.");
       }
@@ -271,7 +265,7 @@ export default function CartPage() {
                       s === step ? "text-[#191E1B]" : "text-[#9a9a9a]"
                     }`}
                   >
-                    {s === 1 ? "Контакты" : s === 2 ? "Доставка" : "Оплата"}
+                    {s === 1 ? "Контакты" : s === 2 ? "Доставка" : "Подтверждение"}
                   </span>
                 </div>
                 {idx < 2 && (
@@ -468,20 +462,63 @@ export default function CartPage() {
               {/* Step 3 */}
               {step === 3 && (
                 <div className="space-y-6">
-                  <h2 className="font-prata text-[20px] text-[#191E1B] mb-6">Оплата</h2>
+                  <h2 className="font-prata text-[20px] text-[#191E1B] mb-6">Подтверждение заказа</h2>
 
+                  {/* Ozon payment info */}
                   <div className="border border-[#e8e0da] p-6 bg-[#F7F0EC] space-y-4">
-                    <p className="text-[11px] tracking-[0.18em] uppercase text-[#9a9a9a]">Способ оплаты</p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full border-2 border-[#3F1111] flex items-center justify-center">
+                    <p className="text-[11px] tracking-[0.18em] uppercase text-[#9a9a9a]">Оплата</p>
+                    <div className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full border-2 border-[#3F1111] flex items-center justify-center mt-0.5 flex-shrink-0">
                         <div className="w-2 h-2 rounded-full bg-[#3F1111]" />
                       </div>
-                      <span className="text-[14px] text-[#191E1B]">Онлайн-оплата (ЮKassa)</span>
+                      <div>
+                        <p className="text-[14px] font-medium text-[#191E1B] mb-1">Оплата при получении</p>
+                        <p className="text-[12px] text-[#9a9a9a] leading-relaxed">
+                          Оплата производится в момент получения заказа — наличными или картой курьеру,
+                          либо картой на терминале в пункте выдачи Ozon.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[12px] text-[#9a9a9a] leading-relaxed">
-                      После нажатия кнопки «Оплатить» вы будете перенаправлены на безопасную страницу оплаты.
-                      Поддерживаются карты Visa, MasterCard, МИР, а также СБП.
-                    </p>
+                    <div className="border-t border-[#e8e0da] pt-4 space-y-2">
+                      {[
+                        "Карта Visa / MasterCard / МИР",
+                        "Наличные курьеру",
+                        "СБП — в приложении банка",
+                        "Ozon Карта",
+                      ].map((method) => (
+                        <div key={method} className="flex items-center gap-2 text-[12px] text-[#9a9a9a]">
+                          <span className="text-[#3F1111]">✓</span>
+                          {method}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Delivery info recap */}
+                  <div className="border border-[#e8e0da] p-5 space-y-2 text-[13px]">
+                    <p className="text-[11px] tracking-[0.18em] uppercase text-[#9a9a9a] mb-3">Доставка</p>
+                    <div className="flex justify-between">
+                      <span className="text-[#9a9a9a]">Способ</span>
+                      <span className="text-[#191E1B]">
+                        {form.deliveryType === "ozon-pvz" ? "Ozon ПВЗ" : "Ozon Курьер"}
+                      </span>
+                    </div>
+                    {form.deliveryType === "ozon-pvz" && form.pvzAddress && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-[#9a9a9a] flex-shrink-0">Пункт выдачи</span>
+                        <span className="text-[#191E1B] text-right text-[12px]">{form.pvzAddress}</span>
+                      </div>
+                    )}
+                    {form.deliveryType === "ozon-courier" && form.address && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-[#9a9a9a] flex-shrink-0">Адрес</span>
+                        <span className="text-[#191E1B] text-right text-[12px]">{form.address}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pt-2 border-t border-[#e8e0da]">
+                      <span className="text-[#9a9a9a]">Стоимость доставки</span>
+                      <span className="text-[#191E1B] font-medium">Бесплатно</span>
+                    </div>
                   </div>
 
                   {/* Order summary recap */}
@@ -523,7 +560,7 @@ export default function CartPage() {
                       disabled={submitting}
                       className="flex-[2] bg-[#3F1111] text-white text-[12px] tracking-[0.18em] uppercase py-3.5 hover:bg-[#5a1a1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {submitting ? "Оформляем..." : `Оплатить ${tot.toLocaleString("ru-RU")} ₽`}
+                      {submitting ? "Оформляем..." : `Оформить заказ · ${tot.toLocaleString("ru-RU")} ₽`}
                     </button>
                   </div>
                 </div>
