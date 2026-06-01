@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { ChevronDown, ChevronUp, Plus, Trash2, ToggleLeft, ToggleRight, Check, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2, ToggleLeft, ToggleRight, Check, Info, PackagePlus } from "lucide-react";
 
 interface PromoCode {
   id: string;
@@ -41,6 +41,8 @@ export default function AdminIntegrationsPage() {
   const [ozonApiKey, setOzonApiKey] = useState("");
   const [ozonSaving, setOzonSaving] = useState(false);
   const [ozonMsg, setOzonMsg] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported?: number; skipped?: number; message?: string; error?: string } | null>(null);
 
   // Promos
   const [promos, setPromos] = useState<PromoCode[]>([]);
@@ -130,6 +132,27 @@ export default function AdminIntegrationsPage() {
     setOzonMsg("Сохранено");
     setTimeout(() => setOzonMsg(""), 3000);
     setOzonSaving(false);
+  }
+
+  async function handleImportFromOzon() {
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch("/api/admin/ozon/import-products", {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportResult({ imported: data.imported, skipped: data.skipped, message: data.message });
+      } else {
+        setImportResult({ error: data.error ?? "Ошибка импорта" });
+      }
+    } catch {
+      setImportResult({ error: "Ошибка соединения" });
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function handleCreatePromo(e: React.FormEvent) {
@@ -362,7 +385,7 @@ export default function AdminIntegrationsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mt-4">
+              <div className="flex items-center gap-3 mt-4 flex-wrap">
                 <button
                   onClick={saveOzon}
                   disabled={ozonSaving}
@@ -375,6 +398,44 @@ export default function AdminIntegrationsPage() {
                   <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>
                     <Check size={14} /> {ozonMsg}
                   </span>
+                )}
+              </div>
+
+              {/* ── Импорт товаров ── */}
+              <div className="mt-5 pt-5 border-t" style={{ borderColor: "#F7F0EC" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "#191E1B" }}>
+                  Импорт товаров из Ozon
+                </p>
+                <p className="text-xs mb-3" style={{ color: "#9a9a9a" }}>
+                  Загружает все ваши товары с Ozon (название, артикул, фото, цену, описание).
+                  Уже существующие товары не затрагиваются.
+                </p>
+                <button
+                  onClick={handleImportFromOzon}
+                  disabled={importing}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-60 transition-colors"
+                  style={{ background: "#005BFF", color: "#fff" }}
+                >
+                  <PackagePlus size={16} />
+                  {importing ? "Импорт идёт..." : "Добавить все товары из Ozon"}
+                </button>
+                {importing && (
+                  <p className="text-xs mt-2 animate-pulse" style={{ color: "#9a9a9a" }}>
+                    Получаем данные от Ozon — это может занять 30–60 секунд...
+                  </p>
+                )}
+                {importResult && (
+                  <div
+                    className="mt-3 px-4 py-3 rounded-lg text-sm"
+                    style={{
+                      background: importResult.error ? "#fee2e2" : "#d1fae5",
+                      color: importResult.error ? "#dc2626" : "#065f46",
+                    }}
+                  >
+                    {importResult.error
+                      ? `❌ ${importResult.error}`
+                      : `✅ ${importResult.message}`}
+                  </div>
                 )}
               </div>
             </div>
