@@ -25,9 +25,18 @@ interface IntegrationSection {
 export default function AdminIntegrationsPage() {
   const { getAuthHeaders } = useAdminAuth();
   const [sections, setSections] = useState<IntegrationSection[]>([
-    { id: "ozon", title: "Ozon Логистика", expanded: true },
+    { id: "yookassa", title: "ЮKassa (оплата)", expanded: true },
+    { id: "ozon", title: "Ozon Логистика", expanded: false },
     { id: "promo", title: "Промокоды", expanded: false },
   ]);
+
+  // ЮKassa
+  const [kassaShopId, setKassaShopId] = useState("");
+  const [kassaSecret, setKassaSecret] = useState("");
+  const [kassaFiscal, setKassaFiscal] = useState(false);
+  const [kassaVat, setKassaVat] = useState("1");
+  const [kassaSaving, setKassaSaving] = useState(false);
+  const [kassaMsg, setKassaMsg] = useState("");
 
   // Ozon
   const [ozonClientId, setOzonClientId] = useState("");
@@ -56,6 +65,11 @@ export default function AdminIntegrationsPage() {
         const d = await res.json();
         const intg = d.integrations ?? {};
         if (intg.ozon_client_id) setOzonClientId(intg.ozon_client_id);
+        if (intg.yookassa_shop_id) setKassaShopId(intg.yookassa_shop_id);
+        if (intg.yookassa_fiscalization) setKassaFiscal(intg.yookassa_fiscalization === "1");
+        if (intg.yookassa_vat_code) setKassaVat(intg.yookassa_vat_code);
+        // секретный ключ приходит замаскированным — показываем плейсхолдер, не значение
+        if (intg.yookassa_secret_key) setKassaSecret("");
       }
     }
     load();
@@ -80,6 +94,32 @@ export default function AdminIntegrationsPage() {
     if (id === "promo" && sections.find((s) => s.id === "promo" && !s.expanded)) {
       loadPromos();
     }
+  }
+
+  async function saveKassa() {
+    setKassaSaving(true);
+    const headers = getAuthHeaders();
+    const reqs: Promise<Response>[] = [];
+    const post = (key: string, value: string) =>
+      reqs.push(
+        fetch("/api/admin/integrations", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ key, value }),
+        })
+      );
+
+    if (kassaShopId) post("yookassa_shop_id", kassaShopId);
+    // секрет отправляем ТОЛЬКО если ввели новый (пустое поле = не менять)
+    if (kassaSecret) post("yookassa_secret_key", kassaSecret);
+    post("yookassa_fiscalization", kassaFiscal ? "1" : "0");
+    post("yookassa_vat_code", kassaVat);
+
+    await Promise.all(reqs);
+    setKassaSecret(""); // не держим секрет в памяти формы
+    setKassaMsg("Сохранено");
+    setTimeout(() => setKassaMsg(""), 3000);
+    setKassaSaving(false);
   }
 
   async function saveOzon() {
@@ -181,6 +221,120 @@ export default function AdminIntegrationsPage() {
       </h1>
 
       <div className="flex flex-col gap-4">
+
+        {/* ── ЮKassa ───────────────────────────────────────────── */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between px-5 py-4 text-left"
+            onClick={() => toggleSection("yookassa")}
+          >
+            <span className="text-sm font-semibold" style={{ color: "#191E1B" }}>
+              ЮKassa — приём оплаты
+            </span>
+            {sections.find((s) => s.id === "yookassa")?.expanded ? (
+              <ChevronUp size={16} style={{ color: "#9a9a9a" }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: "#9a9a9a" }} />
+            )}
+          </button>
+          {sections.find((s) => s.id === "yookassa")?.expanded && (
+            <div className="px-5 pb-5 border-t" style={{ borderColor: "#F7F0EC" }}>
+
+              {/* Info */}
+              <div
+                className="mt-4 mb-5 px-4 py-3 rounded-lg flex gap-3"
+                style={{ background: "#F7F0EC", borderLeft: "3px solid #3F1111" }}
+              >
+                <Info size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#3F1111" }} />
+                <div className="text-[12px] leading-relaxed" style={{ color: "#9a9a9a" }}>
+                  <p className="font-medium mb-0.5" style={{ color: "#191E1B" }}>
+                    Ключи из личного кабинета ЮKassa
+                  </p>
+                  <p>
+                    <a href="https://yookassa.ru/my" target="_blank" rel="noopener noreferrer"
+                      className="underline" style={{ color: "#3F1111" }}>
+                      yookassa.ru/my
+                    </a>{" "}
+                    → Интеграция → Ключи API. Секретный ключ хранится в БД в
+                    зашифрованном виде и не показывается обратно.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelStyle} style={{ color: "#191E1B" }}>shopId (идентификатор магазина)</label>
+                  <input type="text" value={kassaShopId}
+                    onChange={(e) => setKassaShopId(e.target.value)}
+                    placeholder="123456" className={inputCls} style={inputStyle} />
+                </div>
+                <div>
+                  <label className={labelStyle} style={{ color: "#191E1B" }}>Секретный ключ</label>
+                  <input type="password" value={kassaSecret}
+                    onChange={(e) => setKassaSecret(e.target.value)}
+                    placeholder="Оставьте пустым, чтобы не менять" className={inputCls} style={inputStyle} />
+                </div>
+              </div>
+
+              {/* Фискализация */}
+              <div className="mt-4 flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => setKassaFiscal((v) => !v)}
+                  className="mt-0.5"
+                  aria-label="Фискализация"
+                >
+                  {kassaFiscal
+                    ? <ToggleRight size={26} style={{ color: "#059669" }} />
+                    : <ToggleLeft size={26} style={{ color: "#9a9a9a" }} />}
+                </button>
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{ color: "#191E1B" }}>
+                    Отправлять чек 54-ФЗ
+                  </p>
+                  <p className="text-[12px]" style={{ color: "#9a9a9a" }}>
+                    Включайте, только если фискализация подключена в ЮKassa. Иначе оплата вернёт ошибку.
+                  </p>
+                </div>
+                {kassaFiscal && (
+                  <div>
+                    <label className={labelStyle} style={{ color: "#191E1B" }}>Ставка НДС</label>
+                    <select value={kassaVat} onChange={(e) => setKassaVat(e.target.value)}
+                      className={inputCls} style={inputStyle}>
+                      <option value="1">Без НДС (УСН)</option>
+                      <option value="2">0%</option>
+                      <option value="3">10%</option>
+                      <option value="4">20%</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Webhook URL */}
+              <div className="mt-4 px-4 py-3 rounded-lg text-[12px]" style={{ background: "#F7F0EC", color: "#9a9a9a" }}>
+                <p className="font-medium mb-1" style={{ color: "#191E1B" }}>URL для уведомлений (webhook)</p>
+                <p>В кабинете ЮKassa → HTTP-уведомления укажите:</p>
+                <code className="block mt-1 px-2 py-1 rounded text-[11px] break-all" style={{ background: "#fff", color: "#3F1111" }}>
+                  https://andrua-famil.ru/api/webhooks/yookassa
+                </code>
+                <p className="mt-1">События: <b>payment.succeeded</b>, <b>payment.canceled</b>.</p>
+              </div>
+
+              <div className="flex items-center gap-3 mt-4">
+                <button onClick={saveKassa} disabled={kassaSaving}
+                  className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
+                  style={{ background: "#3F1111", color: "#FAFAFA" }}>
+                  {kassaSaving ? "Сохранение..." : "Сохранить"}
+                </button>
+                {kassaMsg && (
+                  <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>
+                    <Check size={14} /> {kassaMsg}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* ── Ozon ─────────────────────────────────────────────── */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">

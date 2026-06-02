@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { prisma } from "@/lib/prisma";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -11,6 +12,22 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
   const { locale } = await params;
   const { num } = await searchParams;
   const orderNumber = num ?? "AF-????";
+
+  // Читаем актуальный статус заказа (оплата подтверждается webhook'ом ЮKassa)
+  let status: string | null = null;
+  if (num) {
+    const order = await prisma.order.findFirst({
+      where: { number: num },
+      select: { status: true },
+    });
+    status = order?.status ?? null;
+  }
+  const isPaid = status === "PAID";
+
+  const heading = isPaid ? "Оплата прошла!" : "Заказ оформлен!";
+  const lead = isPaid
+    ? "Спасибо за заказ! Оплата получена, заказ передан в обработку."
+    : "Заказ создан. Как только оплата подтвердится, мы передадим его в обработку — обычно это занимает несколько секунд.";
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
@@ -40,7 +57,7 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
 
           {/* Heading */}
           <h1 className="font-prata text-[32px] md:text-[40px] text-[#191E1B] mb-3 leading-tight">
-            Заказ оформлен!
+            {heading}
           </h1>
 
           {/* Order number */}
@@ -53,12 +70,12 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
             </p>
           </div>
 
-          {/* Email confirmation */}
+          {/* Status text */}
           <p className="text-[14px] text-[#9a9a9a] mb-2 leading-relaxed">
-            Чек и детали заказа отправлены на ваш email.
+            {lead}
           </p>
           <p className="text-[13px] text-[#9a9a9a] mb-10 leading-relaxed">
-            Мы уведомим вас, когда заказ будет передан в доставку.
+            Детали заказа отправлены на ваш email. Мы уведомим, когда заказ передадут в доставку.
           </p>
 
           {/* Actions */}

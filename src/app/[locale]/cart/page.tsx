@@ -196,16 +196,38 @@ export default function CartPage() {
       });
 
       const data = await res.json();
-      if (res.ok && data.orderNumber) {
-        clearCart();
-        router.push(`/order/success?num=${data.orderNumber}`);
-      } else {
+      if (!res.ok || !data.orderId) {
         setSubmitError(data.error ?? "Ошибка при оформлении заказа. Попробуйте ещё раз.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Заказ создан — создаём платёж ЮKassa и уходим на страницу оплаты
+      const payRes = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: data.orderId }),
+      });
+      const payData = await payRes.json();
+
+      if (payRes.ok && payData.confirmationUrl) {
+        clearCart();
+        // редирект на защищённую страницу оплаты ЮKassa
+        window.location.href = payData.confirmationUrl;
+      } else {
+        // Заказ создан, но оплату инициировать не удалось — не теряем заказ
+        clearCart();
+        setSubmitError(
+          (payData.error ?? "Не удалось перейти к оплате.") +
+            ` Ваш заказ ${data.orderNumber} сохранён — мы свяжемся с вами для оплаты.`
+        );
+        setSubmitting(false);
       }
     } catch {
       setSubmitError("Ошибка соединения. Проверьте интернет и попробуйте снова.");
-    } finally {
       setSubmitting(false);
+    } finally {
+      // setSubmitting управляется выше по веткам (редирект не должен снимать лоадер)
     }
   };
 
@@ -265,7 +287,7 @@ export default function CartPage() {
                       s === step ? "text-[#191E1B]" : "text-[#9a9a9a]"
                     }`}
                   >
-                    {s === 1 ? "Контакты" : s === 2 ? "Доставка" : "Подтверждение"}
+                    {s === 1 ? "Контакты" : s === 2 ? "Доставка" : "Оплата"}
                   </span>
                 </div>
                 {idx < 2 && (
@@ -464,7 +486,7 @@ export default function CartPage() {
                 <div className="space-y-6">
                   <h2 className="font-prata text-[20px] text-[#191E1B] mb-6">Подтверждение заказа</h2>
 
-                  {/* Ozon payment info */}
+                  {/* Online payment info */}
                   <div className="border border-[#e8e0da] p-6 bg-[#F7F0EC] space-y-4">
                     <p className="text-[11px] tracking-[0.18em] uppercase text-[#9a9a9a]">Оплата</p>
                     <div className="flex items-start gap-3">
@@ -472,19 +494,18 @@ export default function CartPage() {
                         <div className="w-2 h-2 rounded-full bg-[#3F1111]" />
                       </div>
                       <div>
-                        <p className="text-[14px] font-medium text-[#191E1B] mb-1">Оплата при получении</p>
+                        <p className="text-[14px] font-medium text-[#191E1B] mb-1">Онлайн-оплата картой или СБП</p>
                         <p className="text-[12px] text-[#9a9a9a] leading-relaxed">
-                          Оплата производится в момент получения заказа — наличными или картой курьеру,
-                          либо картой на терминале в пункте выдачи Ozon.
+                          После нажатия кнопки вы перейдёте на защищённую страницу оплаты ЮKassa.
+                          После оплаты заказ автоматически уйдёт в обработку.
                         </p>
                       </div>
                     </div>
                     <div className="border-t border-[#e8e0da] pt-4 space-y-2">
                       {[
-                        "Карта Visa / MasterCard / МИР",
-                        "Наличные курьеру",
-                        "СБП — в приложении банка",
-                        "Ozon Карта",
+                        "Банковские карты Visa / MasterCard / МИР",
+                        "СБП — Система быстрых платежей",
+                        "SberPay, безопасная сделка",
                       ].map((method) => (
                         <div key={method} className="flex items-center gap-2 text-[12px] text-[#9a9a9a]">
                           <span className="text-[#3F1111]">✓</span>
@@ -560,7 +581,7 @@ export default function CartPage() {
                       disabled={submitting}
                       className="flex-[2] bg-[#3F1111] text-white text-[12px] tracking-[0.18em] uppercase py-3.5 hover:bg-[#5a1a1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {submitting ? "Оформляем..." : `Оформить заказ · ${tot.toLocaleString("ru-RU")} ₽`}
+                      {submitting ? "Переходим к оплате..." : `Перейти к оплате · ${tot.toLocaleString("ru-RU")} ₽`}
                     </button>
                   </div>
                 </div>

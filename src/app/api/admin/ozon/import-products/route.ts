@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOzonCreds } from "@/lib/integrations";
-
-function checkAdmin(req: NextRequest) {
-  return (
-    req.headers.get("x-admin-key") === "admin-authenticated" ||
-    req.headers.get("x-admin") === "true"
-  );
-}
+import { isAdmin } from "@/lib/adminAuth";
 
 const OZON_BASE = "https://api-seller.ozon.ru";
 
@@ -83,7 +77,7 @@ interface OzonProduct {
 
 // ── GET — предпросмотр: сколько новых товаров будет импортировано ──────────────
 export async function GET(req: NextRequest) {
-  if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const creds = await getOzonCreds();
   if (!creds.clientId || !creds.apiKey) {
@@ -111,7 +105,7 @@ export async function GET(req: NextRequest) {
 
 // ── POST — запустить импорт ────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const creds = await getOzonCreds();
   if (!creds.clientId || !creds.apiKey) {

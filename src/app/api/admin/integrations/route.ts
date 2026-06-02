@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { encrypt, decrypt, isEncrypted } from "@/lib/crypto";
-
-function checkAdminAuth(request: NextRequest): boolean {
-  return request.headers.get("x-admin-key") === "admin-authenticated";
-}
+import { isAdmin } from "@/lib/adminAuth";
 
 // Ключи, значения которых нужно маскировать в GET-ответах
 const SENSITIVE_KEYS = ["secret", "password", "api_key", "token", "private"];
@@ -21,7 +18,7 @@ function maskValue(value: string): string {
 
 // ─── GET — читаем все ключи (чувствительные — маскируем) ──────────────────────
 export async function GET(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -46,7 +43,7 @@ export async function GET(request: NextRequest) {
 
 // ─── POST — сохраняем, чувствительные шифруем ─────────────────────────────────
 export async function POST(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

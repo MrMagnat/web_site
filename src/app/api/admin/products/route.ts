@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-function checkAdminAuth(request: NextRequest): boolean {
-  return request.headers.get("x-admin-key") === "admin-authenticated";
-}
+import { isAdmin } from "@/lib/adminAuth";
 
 export async function GET(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,7 +31,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

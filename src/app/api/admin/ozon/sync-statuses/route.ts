@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOzonCreds } from "@/lib/integrations";
-
-function checkAdmin(req: NextRequest) {
-  return (
-    req.headers.get("x-admin-key") === "admin-authenticated" ||
-    req.headers.get("x-admin") === "true"
-  );
-}
+import { isAdmin } from "@/lib/adminAuth";
 
 // Маппинг статусов Ozon FBO → статусы сайта
 const OZON_STATUS_MAP: Record<string, string> = {
@@ -28,7 +22,7 @@ const OZON_STATUS_MAP: Record<string, string> = {
 const FINAL_STATUSES = new Set(["DELIVERED", "CANCELLED", "RETURNED"]);
 
 export async function POST(req: NextRequest) {
-  if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const creds = await getOzonCreds();
   if (!creds.clientId || !creds.apiKey) {

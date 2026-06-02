@@ -31,10 +31,6 @@ export async function POST(request: NextRequest) {
       price: number;
     }> = body.items ?? [];
 
-    const subtotal       = body.subtotal       ?? 0;
-    const discountAmount = body.discountAmount  ?? (body.subtotal != null && body.total != null
-      ? body.subtotal - body.total : 0);
-    const total          = body.total          ?? subtotal;
     const promoCode: string | undefined = body.promoCode;
     const utmSource      = body.utmSource;
     const utmMedium      = body.utmMedium;
@@ -44,13 +40,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // ── ЗАЩИТА ЦЕЛОСТНОСТИ СУММЫ ──────────────────────────────────────────────
+    // Цены НЕ берём из тела запроса (клиент мог их подменить). Для каждой
+    // позиции с productId берём актуальную цену из БД. Сумма заказа считается
+    // на сервере — именно она потом уходит в оплату.
+    const productIds = items.map((i) => i.productId).filter(Boolean) as string[];
+    const dbProducts = productIds.length
+      ? await prisma.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, price: true, discountPrice: true },
+        })
+      : [];
+    const priceMap = new Map<string, number>(
+      dbProducts.map((p: { id: string; price: number; discountPrice: number | null }) => [
+        p.id,
+        p.discountPrice ?? p.price,
+      ])
+    );
+
+    // Достоверная цена за единицу для каждой позиции.
+    // Каждая позиция ОБЯЗАНА сопоставляться с товаром в БД — иначе цену можно
+    // было бы подменить с клиента. Заказы с неизвестными товарами отклоняем.
+    const authoritativeItems: typeof items = [];
+    for (const item of items) {
+      const dbPrice = item.productId ? priceMap.get(item.productId) : undefined;
+      if (dbPrice === undefined) {
+        return NextResponse.json(
+          { error: "Некорректная позиция в заказе (товар не найден)" },
+          { status: 400 }
+        );
+      }
+      if (!Number.isInteger(item.qty) || item.qty < 1 || item.qty > 999) {
+        return NextResponse.json({ error: "Некорректное количество" }, { status: 400 });
+      }
+      authoritativeItems.push({ ...item, price: dbPrice });
+    }
+
+    const subtotal = authoritativeItems.reduce(
+      (sum, it) => sum + it.price * it.qty,
+      0
+    );
+
     // Generate order number
     const year  = new Date().getFullYear();
     const count = await prisma.order.count();
     const orderNumber = `AF-${year}-${String(count + 1).padStart(4, "0")}`;
 
-    // Validate promo code
+    // Validate promo code + вычисляем скидку на сервере
     let promoCodeId: string | undefined;
+    let discountPercent = 0;
     if (promoCode) {
       const promo = await prisma.promoCode.findFirst({
         where: { code: promoCode, isActive: true },
@@ -59,9 +97,16 @@ export async function POST(request: NextRequest) {
         const now       = new Date();
         const expired   = promo.expiresAt && promo.expiresAt < now;
         const exhausted = promo.maxUses !== null && promo.usedCount >= promo.maxUses;
-        if (!expired && !exhausted) promoCodeId = promo.id;
+        if (!expired && !exhausted) {
+          promoCodeId = promo.id;
+          // защита от некорректного промокода (0..100%)
+          discountPercent = Math.min(100, Math.max(0, promo.discountPercent));
+        }
       }
     }
+
+    const discountAmount = Math.round(subtotal * discountPercent) / 100;
+    const total = Math.round((subtotal - discountAmount) * 100) / 100;
 
     // Create order + items in a transaction
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,14 +137,14 @@ export async function POST(request: NextRequest) {
           utmMedium,
           utmCampaign,
           items: {
-            create: items.map((item) => ({
+            create: authoritativeItems.map((item) => ({
               productId: item.productId,
               name:      item.name,
               image:     item.image ?? "",
               size:      item.size,
               color:     item.color,
               qty:       item.qty,
-              price:     item.price,
+              price:     item.price, // достоверная цена из БД
             })),
           },
         },

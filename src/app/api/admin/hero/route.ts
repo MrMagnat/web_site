@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/adminAuth";
 
 const ALL_KEYS = [
   "hero_type", "hero_url",
@@ -7,15 +8,8 @@ const ALL_KEYS = [
   "banner_subtitle", "banner_cta",
 ] as const;
 
-function checkAdmin(req: NextRequest) {
-  return (
-    req.headers.get("x-admin") === "true" ||
-    req.headers.get("x-admin-key") === "admin-authenticated"
-  );
-}
-
 export async function GET(req: NextRequest) {
-  if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const rows = await prisma.integration.findMany({
     where: { key: { in: [...ALL_KEYS] } },
   });
@@ -25,7 +19,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
 
   const updates = ALL_KEYS

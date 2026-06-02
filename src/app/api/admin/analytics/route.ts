@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-function checkAdminAuth(request: NextRequest): boolean {
-  return request.headers.get("x-admin-key") === "admin-authenticated";
-}
+import { isAdmin } from "@/lib/adminAuth";
 
 function getPeriodDays(period: string): number {
   if (period === "7d") return 7;
@@ -12,7 +9,7 @@ function getPeriodDays(period: string): number {
 }
 
 export async function GET(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

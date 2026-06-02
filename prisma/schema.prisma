@@ -106,6 +106,7 @@ model Order {
   promoCode       PromoCode?   @relation(fields: [promoCodeId], references: [id])
 
   // Интеграции
+  kassaPaymentId  String?      // ID платежа ЮKassa (payment.id)
   kassaReceiptId  String?      // ID чека онлайн-кассы
   ozonPostingId   String?      // ID отправления Ozon
   ozonTrackingId  String?
