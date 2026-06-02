@@ -84,7 +84,7 @@ $DC up -d --build
 
 # ── 5. Миграции (no-op, если дамп уже содержит актуальную схему) ──────────
 log "Прогоняю prisma migrate deploy"
-$DC exec -T app npx prisma migrate deploy || warn "migrate deploy завершился с предупреждением — проверьте логи"
+$DC --profile tools run --rm migrate || warn "migrate deploy завершился с предупреждением — проверьте логи"
 
 cat <<EOF
 

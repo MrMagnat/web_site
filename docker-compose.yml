@@ -18,6 +18,29 @@ services:
       timeout: 5s
       retries: 5
 
+  # Разовый сервис миграций. Использует builder-стадию (там есть схема,
+  # миграции, prisma.config.ts и Prisma CLI — в рантайм-образ app они не
+  # попадают). Запускается вручную: docker compose ... run --rm migrate
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: andrua-migrate
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-andrua}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-andrua_famil}
+    command: ["npx", "prisma", "migrate", "deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: "no"
+    profiles:
+      - tools
+
   app:
     build:
       context: .

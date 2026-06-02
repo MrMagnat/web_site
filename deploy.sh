@@ -22,9 +22,9 @@ git pull origin main
 # Пересобираем и перезапускаем контейнеры
 $DC up -d --build
 
-# Применяем миграции БД
+# Применяем миграции БД через builder-образ (в рантайме app схемы нет)
 echo "Применяю миграции Prisma..."
-$DC exec -T app npx prisma migrate deploy
+$DC --profile tools run --rm migrate
 
 echo ""
 echo "✓ Деплой завершён! Сайт: https://andrua-famil.ru"
