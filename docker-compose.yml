@@ -25,12 +25,16 @@ services:
       dockerfile: Dockerfile
     container_name: andrua_app
     restart: unless-stopped
+    # Все переменные (ENCRYPTION_KEY, ADMIN_*, NEXTAUTH_*, RESEND_* и т.д.)
+    # подтягиваются из .env.production. ENCRYPTION_KEY обязателен — им
+    # шифруются секреты (ключи Ozon) в базе. Без него работа с Ozon сломается.
+    env_file:
+      - .env.production
     environment:
+      # DATABASE_URL переопределяем на внутренний хост compose-сети (postgres),
+      # значение из .env.production здесь не используется.
       DATABASE_URL: postgresql://${POSTGRES_USER:-andrua}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-andrua_famil}
       NODE_ENV: production
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       NEXT_TELEMETRY_DISABLED: "1"
     volumes:
       - uploads:/app/public/uploads
