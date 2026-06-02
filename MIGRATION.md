@@ -6,6 +6,9 @@
 Архитектура нового сервера — **Docker Compose**: три контейнера
 (`postgres` + `app` (Next.js) + `nginx`), всё поднимается одной командой.
 
+> Если переносить ничего не нужно и хочется поднять **чистый сайт из git** —
+> смотрите раздел [«Чистая установка с нуля»](#чистая-установка-с-нуля-без-переноса) в конце.
+
 ---
 
 ## Что переносится
@@ -234,3 +237,72 @@ cd /opt/andrua-famil && bash deploy.sh
 | Сборка падает (Killed / OOM) | Мало RAM. `server-bootstrap.sh` создаёт swap; проверьте `free -h` |
 | Нет картинок | uploads не попали в бэкап. Проверьте `UPLOADS_DIR` на старом сервере и повторите бэкап |
 | `docker compose` не найден | Запустите `server-bootstrap.sh` ещё раз — он ставит Docker |
+
+---
+
+## Чистая установка с нуля (без переноса)
+
+Если данные переносить не нужно — поднимаем пустой сайт прямо из git.
+База будет пустой; товары наполняются импортом из Ozon, контент — в админке.
+
+### 1. Освободить порты 80/443 от старого сайта (см. Шаг 1.5 выше)
+
+```bash
+ss -tlnp '( sport = :80 or sport = :443 )'
+sudo systemctl stop nginx  && sudo systemctl disable nginx     # если системный nginx
+sudo systemctl stop apache2 && sudo systemctl disable apache2  # если Apache
+```
+
+### 2. Направить домен на сервер (DNS)
+
+A-запись `andrua-famil.ru` (и `www`) → IP нового сервера. Проверка: `dig +short andrua-famil.ru`.
+Это нужно ДО выпуска SSL.
+
+### 3. Подготовить сервер
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MrMagnat/web_site/main/scripts/server-bootstrap.sh | bash
+cd /opt/andrua-famil
+```
+
+### 4. Заполнить .env.production (секреты генерируем НОВЫЕ)
+
+```bash
+# сгенерировать ключи:
+echo "ENCRYPTION_KEY=$(openssl rand -hex 32)"
+echo "NEXTAUTH_SECRET=$(openssl rand -hex 32)"
+echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+
+nano .env.production   # вставить сгенерированное + ADMIN_EMAIL / ADMIN_PASSWORD
+```
+
+> `ENCRYPTION_KEY` задаётся один раз и больше НЕ меняется (иначе сохранённые
+> ключи интеграций станут нечитаемыми).
+
+### 5. Выпустить SSL-сертификат (порт 80 свободен, DNS уже направлен)
+
+```bash
+apt-get install -y certbot
+certbot certonly --standalone -d andrua-famil.ru -d www.andrua-famil.ru \
+  --agree-tos -m admin@andrua-famil.ru --non-interactive
+```
+
+### 6. Запустить сайт
+
+```bash
+bash deploy.sh        # сборка + запуск + создание схемы БД (migrate deploy)
+docker compose -p andrua ps
+```
+
+Сайт открывается на `https://andrua-famil.ru` (каталог пока пустой).
+
+### 7. Первичная настройка в админке
+
+1. Войти: `/admin/login` (ADMIN_EMAIL / ADMIN_PASSWORD из .env.production).
+2. **Категории** → создать хотя бы одну категорию (нужна для импорта).
+3. **Интеграции → Ozon** → вписать Client ID + API Key → «Добавить все товары».
+4. Разложить импортированные товары по категориям, заполнить размеры/цвета.
+5. **Интеграции → ЮKassa** → shopId + секретный ключ; в кабинете ЮKassa указать
+   webhook `https://andrua-famil.ru/api/webhooks/yookassa`.
+6. **Страницы сайта → Лендинг** → загрузить видео/фото героя и баннер.
+7. **Страницы сайта** → заполнить инфо-страницы (доставка, о бренде и т.д.).
