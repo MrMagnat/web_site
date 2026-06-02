@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
                 background: "#FAFAFA",
                 color: "#191E1B",
               }}
-              placeholder="admin@andrua-famil.ru"
+              placeholder="admin@andruafamil.ru"
             />
           </div>
 

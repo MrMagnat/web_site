@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "picsum.photos" },
-      { protocol: "https", hostname: "andrua-famil.ru" },
+      { protocol: "https", hostname: "andruafamil.ru" },
     ],
   },
   poweredByHeader: false,

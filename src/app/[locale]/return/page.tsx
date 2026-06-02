@@ -25,7 +25,7 @@ interface SuccessState {
   email: string;
 }
 
-const SUPPORT_EMAIL = "support@andrua-famil.ru";
+const SUPPORT_EMAIL = "support@andruafamil.ru";
 
 export default function ReturnPage() {
   const locale = useLocale();

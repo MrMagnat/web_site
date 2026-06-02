@@ -69,7 +69,7 @@ export default function AdminUTMPage() {
     medium: "",
     campaign: "",
     content: "",
-    baseUrl: "https://andrua-famil.ru/",
+    baseUrl: "https://andruafamil.ru/",
   });
 
   async function load() {
@@ -89,7 +89,7 @@ export default function AdminUTMPage() {
 
   function getPreviewUrl() {
     try {
-      const url = new URL(form.baseUrl || "https://andrua-famil.ru/");
+      const url = new URL(form.baseUrl || "https://andruafamil.ru/");
       if (form.source) url.searchParams.set("utm_source", form.source);
       if (form.medium) url.searchParams.set("utm_medium", form.medium);
       if (form.campaign) url.searchParams.set("utm_campaign", form.campaign);
@@ -115,7 +115,7 @@ export default function AdminUTMPage() {
         medium: "",
         campaign: "",
         content: "",
-        baseUrl: "https://andrua-famil.ru/",
+        baseUrl: "https://andruafamil.ru/",
       });
       await load();
     }

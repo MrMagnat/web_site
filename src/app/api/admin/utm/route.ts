@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Build tracking URL: /api/utm/track?tag=<id>&to=<encodedDest>
-    const origin = request.headers.get("origin") ?? request.headers.get("host") ?? "https://andrua-famil.ru";
+    const origin = request.headers.get("origin") ?? request.headers.get("host") ?? "https://andruafamil.ru";
     const base = origin.startsWith("http") ? origin : `https://${origin}`;
     const trackingUrl = `${base}/api/utm/track?tag=${utmTag.id}&to=${encodeURIComponent(destString)}`;
 

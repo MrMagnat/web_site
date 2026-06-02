@@ -315,7 +315,7 @@ export default function AdminIntegrationsPage() {
                 <p className="font-medium mb-1" style={{ color: "#191E1B" }}>URL для уведомлений (webhook)</p>
                 <p>В кабинете ЮKassa → HTTP-уведомления укажите:</p>
                 <code className="block mt-1 px-2 py-1 rounded text-[11px] break-all" style={{ background: "#fff", color: "#3F1111" }}>
-                  https://andrua-famil.ru/api/webhooks/yookassa
+                  https://andruafamil.ru/api/webhooks/yookassa
                 </code>
                 <p className="mt-1">События: <b>payment.succeeded</b>, <b>payment.canceled</b>.</p>
               </div>

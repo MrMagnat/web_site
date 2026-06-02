@@ -143,13 +143,13 @@ docker compose -p andrua logs -f app
 
 ## Шаг 4. Домен (DNS)
 
-В панели регистратора домена `andrua-famil.ru` поменяйте A-запись на IP нового
+В панели регистратора домена `andruafamil.ru` поменяйте A-запись на IP нового
 сервера (и `www`, если есть). Обновление DNS занимает от минут до пары часов.
 
 Проверить, куда сейчас указывает домен:
 
 ```bash
-dig +short andrua-famil.ru
+dig +short andruafamil.ru
 ```
 
 ---
@@ -182,8 +182,8 @@ DNS уже должен указывать на новый сервер.
 docker compose -p andrua stop nginx
 
 apt-get install -y certbot
-certbot certonly --standalone -d andrua-famil.ru -d www.andrua-famil.ru \
-  --agree-tos -m admin@andrua-famil.ru --non-interactive
+certbot certonly --standalone -d andruafamil.ru -d www.andruafamil.ru \
+  --agree-tos -m admin@andruafamil.ru --non-interactive
 
 docker compose -p andrua start nginx
 ```
@@ -196,7 +196,7 @@ Certbot сам поставит таймер автопродления (`system
 
 ## Шаг 6. Проверка
 
-- [ ] Сайт открывается по `https://andrua-famil.ru`
+- [ ] Сайт открывается по `https://andruafamil.ru`
 - [ ] Каталог показывает товары, у товаров есть картинки
 - [ ] Вход в админку `/admin/login` работает
 - [ ] В админке → Интеграции → Ozon: ключи на месте, импорт/статусы работают
@@ -255,7 +255,7 @@ sudo systemctl stop apache2 && sudo systemctl disable apache2  # если Apache
 
 ### 2. Направить домен на сервер (DNS)
 
-A-запись `andrua-famil.ru` (и `www`) → IP нового сервера. Проверка: `dig +short andrua-famil.ru`.
+A-запись `andruafamil.ru` (и `www`) → IP нового сервера. Проверка: `dig +short andruafamil.ru`.
 Это нужно ДО выпуска SSL.
 
 ### 3. Подготовить сервер
@@ -283,8 +283,8 @@ nano .env.production   # вставить сгенерированное + ADMIN
 
 ```bash
 apt-get install -y certbot
-certbot certonly --standalone -d andrua-famil.ru -d www.andrua-famil.ru \
-  --agree-tos -m admin@andrua-famil.ru --non-interactive
+certbot certonly --standalone -d andruafamil.ru -d www.andruafamil.ru \
+  --agree-tos -m admin@andruafamil.ru --non-interactive
 ```
 
 ### 6. Запустить сайт
@@ -294,7 +294,7 @@ bash deploy.sh        # сборка + запуск + создание схем�
 docker compose -p andrua ps
 ```
 
-Сайт открывается на `https://andrua-famil.ru` (каталог пока пустой).
+Сайт открывается на `https://andruafamil.ru` (каталог пока пустой).
 
 ### 7. Первичная настройка в админке
 
@@ -303,6 +303,6 @@ docker compose -p andrua ps
 3. **Интеграции → Ozon** → вписать Client ID + API Key → «Добавить все товары».
 4. Разложить импортированные товары по категориям, заполнить размеры/цвета.
 5. **Интеграции → ЮKassa** → shopId + секретный ключ; в кабинете ЮKassa указать
-   webhook `https://andrua-famil.ru/api/webhooks/yookassa`.
+   webhook `https://andruafamil.ru/api/webhooks/yookassa`.
 6. **Страницы сайта → Лендинг** → загрузить видео/фото героя и баннер.
 7. **Страницы сайта** → заполнить инфо-страницы (доставка, о бренде и т.д.).
