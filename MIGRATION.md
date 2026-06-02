@@ -45,6 +45,39 @@ UPLOADS_DIR=/srv/sites/andrua-famil/public/uploads bash scripts/backup.sh
 
 ---
 
+## Шаг 1.5. Освободить НОВЫЙ сервер от старого сайта
+
+Если на новом сервере уже крутится какой-то сайт (статичный HTML и т.п.),
+он занимает порты 80/443 — наш Docker-nginx без них не запустится.
+
+Сначала посмотрите, кто слушает порты 80 и 443:
+
+```bash
+sudo ss -tlnp '( sport = :80 or sport = :443 )'
+```
+
+**Если это системный nginx или Apache** — остановите и отключите автозапуск:
+
+```bash
+# nginx
+sudo systemctl stop nginx && sudo systemctl disable nginx
+# или Apache
+sudo systemctl stop apache2 && sudo systemctl disable apache2
+```
+
+**Если старый сайт — это другой docker-контейнер** — найдите и остановите его:
+
+```bash
+docker ps                       # смотрим что запущено
+docker stop <имя_контейнера>    # останавливаем
+# если он поднят через compose — в его папке:  docker compose down
+```
+
+Старые файлы сайта (обычно `/var/www/html`) можно удалить позже — они не мешают.
+Главное, чтобы команда `ss` выше больше ничего не показывала на 80/443.
+
+---
+
 ## Шаг 2. Подготовка НОВОГО сервера
 
 На новом сервере (чистая Ubuntu 22.04 / 24.04), от root:
