@@ -52,11 +52,11 @@ export default function AboutPage() {
               backgroundSize: "24px 24px",
             }}
           />
-          <div className="max-w-[1200px] mx-auto px-8 py-28 md:py-36 relative">
+          <div className="max-w-[1200px] mx-auto px-6 md:px-8 py-24 md:py-36 relative">
             <p className="text-[10px] tracking-[0.32em] uppercase text-white/40 mb-6">
               О бренде
             </p>
-            <h1 className="font-prata text-[40px] md:text-[58px] leading-[1.1] mb-8 max-w-[720px]">
+            <h1 className="font-prata text-[30px] sm:text-[40px] md:text-[58px] leading-[1.1] mb-8 max-w-[720px]">
               Мы создаём уют&nbsp;—<br />
               не&nbsp;просто продаём текстиль
             </h1>
@@ -69,14 +69,16 @@ export default function AboutPage() {
 
         {/* Stats */}
         <section className="border-b border-[#e8e0da]">
-          <div className="max-w-[1200px] mx-auto px-8">
+          <div className="max-w-[1200px] mx-auto px-6 md:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4">
               {STATS.map((s, i) => (
                 <div
                   key={i}
-                  className="py-10 px-6 text-center border-r last:border-r-0 border-[#e8e0da]"
+                  className={`py-10 px-4 sm:px-6 text-center border-[#e8e0da] ${
+                    i % 2 === 0 ? "border-r" : "md:border-r"
+                  } ${i === 3 ? "md:border-r-0" : ""} ${i < 2 ? "border-b md:border-b-0" : ""}`}
                 >
-                  <p className="font-prata text-[36px] md:text-[42px] text-[#3F1111] mb-2">
+                  <p className="font-prata text-[30px] sm:text-[36px] md:text-[42px] text-[#3F1111] mb-2">
                     {s.value}
                   </p>
                   <p className="text-[11px] tracking-[0.18em] uppercase text-[#9a9a9a]">
@@ -89,8 +91,8 @@ export default function AboutPage() {
         </section>
 
         {/* Story */}
-        <section className="max-w-[1200px] mx-auto px-8 py-20 md:py-28">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        <section className="max-w-[1200px] mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
               <p className="text-[10px] tracking-[0.28em] uppercase text-[#9a9a9a] mb-5">
                 Наша история
@@ -131,7 +133,7 @@ export default function AboutPage() {
                 </div>
               </div>
               {/* Accent card */}
-              <div className="absolute -bottom-6 -left-6 bg-[#191E1B] text-white px-7 py-5">
+              <div className="absolute -bottom-6 left-0 sm:-left-6 bg-[#191E1B] text-white px-7 py-5">
                 <p className="font-prata text-[22px]">2024</p>
                 <p className="text-[11px] tracking-[0.16em] uppercase text-white/50 mt-0.5">
                   Год основания
@@ -143,7 +145,7 @@ export default function AboutPage() {
 
         {/* Values */}
         <section className="bg-[#F7F0EC] py-20 md:py-28">
-          <div className="max-w-[1200px] mx-auto px-8">
+          <div className="max-w-[1200px] mx-auto px-6 md:px-8">
             <p className="text-[10px] tracking-[0.28em] uppercase text-[#9a9a9a] mb-4 text-center">
               Принципы
             </p>
@@ -165,8 +167,8 @@ export default function AboutPage() {
         </section>
 
         {/* Quality */}
-        <section className="max-w-[1200px] mx-auto px-8 py-20 md:py-28">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+        <section className="max-w-[1200px] mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
             <div>
               <p className="text-[10px] tracking-[0.28em] uppercase text-[#9a9a9a] mb-5">
                 Материалы
@@ -187,7 +189,7 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { label: "Хлопок", desc: "100% натуральный, гипоаллергенный" },
                 { label: "Лён", desc: "Экологичный, долговечный" },
@@ -205,7 +207,7 @@ export default function AboutPage() {
 
         {/* Delivery & support strip */}
         <section className="bg-[#191E1B] py-14">
-          <div className="max-w-[1200px] mx-auto px-8">
+          <div className="max-w-[1200px] mx-auto px-6 md:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-white">
               <div>
                 <p className="text-[11px] tracking-[0.22em] uppercase text-white/35 mb-3">
@@ -246,7 +248,7 @@ export default function AboutPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-20 text-center">
+        <section className="py-20 px-6 text-center">
           <p className="font-prata text-[28px] md:text-[36px] text-[#191E1B] mb-6">
             Готовы обновить дом?
           </p>

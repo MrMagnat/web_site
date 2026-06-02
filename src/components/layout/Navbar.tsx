@@ -38,7 +38,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 h-[72px] transition-all duration-400 ${
+        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-8 h-[72px] transition-all duration-400 ${
           isLight
             ? "border-b border-transparent"
             : "bg-[#FAFAFA]/95 backdrop-blur-md border-b border-[#e8e0da]"
@@ -47,7 +47,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
         {/* Logo */}
         <Link
           href={`${prefix}/`}
-          className={`font-prata text-[17px] tracking-[0.14em] uppercase transition-colors duration-400 ${
+          className={`font-prata text-[15px] sm:text-[17px] tracking-[0.1em] sm:tracking-[0.14em] uppercase whitespace-nowrap transition-colors duration-400 ${
             isLight ? "text-white" : "text-[#191E1B]"
           }`}
         >
@@ -76,7 +76,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
         </ul>
 
         {/* Actions */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 sm:gap-5">
           {/* Lang switcher */}
           <Link
             href={alternateLocaleUrl}
@@ -128,7 +128,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
 
       {/* Mobile menu overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-[#191E1B] flex flex-col pt-[72px] px-8 pb-10">
+        <div className="fixed inset-0 z-40 bg-[#191E1B] flex flex-col pt-[72px] px-6 pb-10">
           <ul className="flex flex-col gap-6 mt-10 list-none">
             {(["catalog", "collections", "about", "delivery"] as const).map((key) => (
               <li key={key}>

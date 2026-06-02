@@ -222,13 +222,13 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center" style={{ color: "#9a9a9a" }}>
             Загрузка...
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[680px]">
             <thead>
               <tr style={{ background: "#F7F0EC" }}>
                 {["Номер", "Дата", "Клиент", "Телефон", "Сумма", "Доставка", "Статус", ""].map((h) => (

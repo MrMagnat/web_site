@@ -223,11 +223,11 @@ export default async function HomePage() {
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#191E1B]/20 via-transparent to-[#191E1B]/60" />
 
-        <div className="absolute bottom-20 left-16 max-w-[520px]">
+        <div className="absolute bottom-12 left-6 right-6 sm:bottom-20 sm:left-16 sm:right-auto max-w-[520px]">
           <p className="text-[11px] tracking-[0.24em] uppercase text-white/70 mb-4">
             {t("hero.tag")}
           </p>
-          <h1 className="font-prata text-[clamp(36px,5vw,60px)] leading-[1.1] text-white mb-8 whitespace-pre-line">
+          <h1 className="font-prata text-[clamp(30px,7vw,60px)] leading-[1.1] text-white mb-8 whitespace-pre-line">
             {t("hero.title")}
           </h1>
           <Link
@@ -239,7 +239,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="absolute bottom-8 right-12 flex flex-col items-center gap-2 text-white/50">
+        <div className="hidden sm:flex absolute bottom-8 right-12 flex-col items-center gap-2 text-white/50">
           <div className="w-[1px] h-12 bg-white/30 animate-pulse" />
           <span className="text-[9px] tracking-[0.22em] uppercase">Scroll</span>
         </div>
@@ -265,7 +265,7 @@ export default async function HomePage() {
       </div>
 
       {/* ── EDITORIAL CATEGORY MOSAIC ─────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row gap-[2px]" style={{ minHeight: 480 }}>
+      <div className="flex flex-col md:flex-row gap-[2px] md:min-h-[480px]">
         {/* Первая карточка — широкая */}
         {mosaicCats[0] && (() => {
           const cat = mosaicCats[0];
@@ -275,8 +275,8 @@ export default async function HomePage() {
             <Link
               key={cat.id}
               href={`${prefix}/catalog?category=${cat.slug}`}
-              className="group relative overflow-hidden flex-shrink-0"
-              style={{ background: "#F7F0EC", minHeight: 480, width: "100%", flex: "0 0 42%" }}
+              className="group relative overflow-hidden flex-shrink-0 w-full min-h-[320px] md:min-h-[480px] md:flex-[0_0_42%]"
+              style={{ background: "#F7F0EC" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={imgSrc} alt={name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -294,11 +294,9 @@ export default async function HomePage() {
         {/* Остальные — равномерная сетка справа */}
         {mosaicCats.length > 1 && (
           <div
-            className="grid gap-[2px] flex-1"
-            style={{
-              gridTemplateColumns: mosaicCats.length - 1 <= 2 ? "1fr" : "1fr 1fr",
-              gridAutoRows: `${480 / Math.ceil((mosaicCats.length - 1) / 2)}px`,
-            }}
+            className={`grid gap-[2px] flex-1 auto-rows-[200px] sm:auto-rows-[240px] md:auto-rows-fr ${
+              mosaicCats.length - 1 <= 2 ? "grid-cols-1" : "grid-cols-2"
+            }`}
           >
             {mosaicCats.slice(1).map((cat, i) => {
               const name = isRu ? cat.nameRu : cat.nameEn;
@@ -351,7 +349,7 @@ export default async function HomePage() {
           />
         </div>
         <div
-          className="flex flex-col justify-center px-12 md:px-16 py-20"
+          className="flex flex-col justify-center px-6 sm:px-12 md:px-16 py-16 md:py-20"
           style={{ background: "#F7F0EC" }}
         >
           <p
@@ -384,7 +382,7 @@ export default async function HomePage() {
       </div>
 
       {/* ── WIDE BANNER ───────────────────────────────────────────────────── */}
-      <div className="relative h-[460px] overflow-hidden">
+      <div className="relative h-[360px] sm:h-[460px] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={bannerImage}
@@ -427,8 +425,8 @@ export default async function HomePage() {
       </div>
 
       {/* ── FEATURES STRIP ────────────────────────────────────────────────── */}
-      <div className="py-16 px-8 md:px-12" style={{ background: "#191E1B" }}>
-        <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="py-16 px-6 md:px-12" style={{ background: "#191E1B" }}>
+        <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10 md:gap-8">
           {(["delivery", "quality", "return", "support"] as const).map(
             (key, i) => (
               <div

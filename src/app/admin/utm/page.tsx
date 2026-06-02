@@ -287,7 +287,7 @@ export default function AdminUTMPage() {
       </div>
 
       {/* Tags table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
         <div className="px-5 py-3 border-b" style={{ borderColor: "#F7F0EC" }}>
           <h2 className="text-sm font-semibold" style={{ color: "#191E1B" }}>
             Все UTM-метки ({tags.length})
@@ -298,7 +298,7 @@ export default function AdminUTMPage() {
             Загрузка...
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[680px]">
             <thead>
               <tr style={{ background: "#F7F0EC" }}>
                 {["Название", "Source", "Campaign", "Клики", "Создан", "Действия"].map(

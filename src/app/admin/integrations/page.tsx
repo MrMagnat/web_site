@@ -394,7 +394,8 @@ export default function AdminIntegrationsPage() {
               {promosLoading ? (
                 <p className="text-sm mt-4" style={{ color: "#9a9a9a" }}>Загрузка...</p>
               ) : (
-                <table className="w-full text-sm mt-4">
+                <div className="overflow-x-auto">
+                <table className="w-full text-sm mt-4 min-w-[680px]">
                   <thead>
                     <tr style={{ background: "#F7F0EC" }}>
                       {["Код", "Скидка", "Применений", "Заказов", "Истекает", "Статус", ""].map((h) => (
@@ -465,6 +466,7 @@ export default function AdminIntegrationsPage() {
                     )}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           )}

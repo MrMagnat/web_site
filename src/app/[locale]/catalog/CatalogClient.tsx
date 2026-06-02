@@ -153,7 +153,7 @@ export default function CatalogClient({
   // иначе React при каждом ре-рендере создаёт новый тип компонента,
   // анмаунтит его и инпуты теряют фокус.
   const sidebarJsx = (
-    <aside className="w-52 flex-shrink-0 space-y-8">
+    <aside className="w-full md:w-52 flex-shrink-0 space-y-8">
       {/* Categories */}
       <div>
         <p
@@ -289,15 +289,15 @@ export default function CatalogClient({
     <div>
       {/* ── Category banner (when one category selected with image) ── */}
       {activeCat?.image && (
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative h-40 sm:h-48 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={activeCat.image}
             alt={pageTitle}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#191E1B]/60 to-transparent flex items-end px-10 pb-8">
-            <h1 className="font-prata text-[36px] text-white">{pageTitle}</h1>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#191E1B]/60 to-transparent flex items-end px-6 sm:px-10 pb-6 sm:pb-8">
+            <h1 className="font-prata text-[26px] sm:text-[36px] text-white">{pageTitle}</h1>
           </div>
         </div>
       )}

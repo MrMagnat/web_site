@@ -7,7 +7,7 @@ export default function Footer() {
   const prefix = locale === "ru" ? "" : "/en";
 
   return (
-    <footer className="bg-[#191E1B] text-white/55 pt-16 pb-8 px-12">
+    <footer className="bg-[#191E1B] text-white/55 pt-16 pb-8 px-6 md:px-12">
       <div className="max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-14">
 

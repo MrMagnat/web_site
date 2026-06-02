@@ -296,13 +296,13 @@ export default function AdminCategoriesPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center" style={{ color: "#9a9a9a" }}>
             Загрузка...
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[680px]">
             <thead>
               <tr style={{ background: "#F7F0EC" }}>
                 <th className="text-left px-4 py-3 font-medium" style={{ color: "#9a9a9a" }}>

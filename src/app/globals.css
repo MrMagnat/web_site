@@ -108,3 +108,5 @@ body {
 .prose-custom tr:nth-child(even) td { background: #FAFAFA; }
 .prose-custom a { color: #3F1111; text-decoration: underline; }
 .prose-custom strong { color: #191E1B; font-weight: 600; }
+.prose-custom img { max-width: 100%; height: auto; border-radius: 4px; }
+.prose-custom { overflow-wrap: break-word; word-break: break-word; }

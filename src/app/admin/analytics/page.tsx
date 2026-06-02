@@ -297,7 +297,8 @@ export default function AdminAnalyticsPage() {
             <h2 className="text-sm font-semibold mb-4" style={{ color: "#191E1B" }}>
               Топ товаров
             </h2>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr style={{ color: "#9a9a9a" }}>
                   <th className="text-left pb-2 font-medium">Товар</th>
@@ -352,6 +353,7 @@ export default function AdminAnalyticsPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}
