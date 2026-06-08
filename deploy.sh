@@ -19,13 +19,15 @@ fi
 # Обновляем код
 git pull origin main
 
-# Пересобираем и перезапускаем контейнеры
+# Сначала миграции (через builder-образ; --build обязателен, иначе берётся
+# старый кэш без новых миграций). Применяем ДО запуска app, чтобы приложение
+# не стартовало против базы без нужных таблиц.
+echo "Применяю миграции Prisma..."
+$DC --profile tools run --rm --build migrate
+
+# Затем пересобираем и перезапускаем приложение
 $DC up -d --build
 
-# Применяем миграции БД через builder-образ (в рантайме app схемы нет)
-echo "Применяю миграции Prisma..."
-$DC --profile tools run --rm migrate
-
 echo ""
-echo "✓ Деплой завершён! Сайт: https://andrua-famil.ru"
-echo "✓ Админка: https://andrua-famil.ru/admin/login"
+echo "✓ Деплой завершён! Сайт: https://andruafamil.ru"
+echo "✓ Админка: https://andruafamil.ru/admin/login"
