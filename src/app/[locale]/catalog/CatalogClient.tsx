@@ -18,6 +18,7 @@ interface Product extends ProductWithCategory {}
 interface Props {
   products: Product[];
   categories: Category[];
+  collections: Category[];
   locale: string;
   initialSearchParams: {
     category?: string;
@@ -42,13 +43,16 @@ const SORT_LABELS: Record<SortKey, string> = {
 export default function CatalogClient({
   products,
   categories,
+  collections,
   locale,
   initialSearchParams,
 }: Props) {
   const { addItem, openCart } = useCartStore();
   const isRu = locale === "ru";
 
-  const collectionParam = initialSearchParams.collection ?? null;
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(
+    initialSearchParams.collection ?? null
+  );
 
   // Filter state
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -72,8 +76,8 @@ export default function CatalogClient({
   const filtered = useMemo(() => {
     let result = [...products];
 
-    if (collectionParam) {
-      result = result.filter((p) => p.collectionSlug === collectionParam);
+    if (selectedCollection) {
+      result = result.filter((p) => p.collectionSlug === selectedCollection);
     }
     if (selectedCategories.length > 0) {
       result = result.filter(
@@ -114,7 +118,7 @@ export default function CatalogClient({
     return result;
   }, [
     products,
-    collectionParam,
+    selectedCollection,
     selectedCategories,
     sort,
     minPrice,
@@ -326,6 +330,45 @@ export default function CatalogClient({
             >
               {pageTitle}
             </h1>
+          </div>
+        )}
+
+        {/* Collections — горизонтальная прокручиваемая лента */}
+        {collections.length > 0 && (
+          <div className="mb-7">
+            <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ color: "#9a9a9a" }}>
+              Коллекции
+            </p>
+            <div className="flex gap-2.5 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
+              <button
+                onClick={() => setSelectedCollection(null)}
+                className="flex-shrink-0 px-4 py-2 rounded-full text-[12px] whitespace-nowrap transition-colors border"
+                style={{
+                  background: selectedCollection === null ? "#3F1111" : "#fff",
+                  color: selectedCollection === null ? "#FAFAFA" : "#191E1B",
+                  borderColor: selectedCollection === null ? "#3F1111" : "#e8e0da",
+                }}
+              >
+                Все коллекции
+              </button>
+              {collections.map((col) => {
+                const active = selectedCollection === col.slug;
+                return (
+                  <button
+                    key={col.id}
+                    onClick={() => setSelectedCollection(active ? null : col.slug)}
+                    className="flex-shrink-0 px-4 py-2 rounded-full text-[12px] whitespace-nowrap transition-colors border"
+                    style={{
+                      background: active ? "#3F1111" : "#fff",
+                      color: active ? "#FAFAFA" : "#191E1B",
+                      borderColor: active ? "#3F1111" : "#e8e0da",
+                    }}
+                  >
+                    {isRu ? col.nameRu : col.nameEn}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

@@ -88,13 +88,33 @@ async function fetchCategories() {
   }
 }
 
+async function fetchCollections() {
+  try {
+    const cols = await prisma.collection.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return cols.map((c: any) => ({
+      id: c.id,
+      slug: c.slug,
+      nameRu: c.nameRu,
+      nameEn: c.nameEn,
+      image: c.image ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function CatalogPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   const sp = await searchParams;
 
-  const [products, categories] = await Promise.all([
+  const [products, categories, collections] = await Promise.all([
     fetchProducts(sp), // sp передаётся для совместимости, фильтры — на клиенте
     fetchCategories(),
+    fetchCollections(),
   ]);
 
   return (
@@ -105,6 +125,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
           <CatalogClient
             products={products}
             categories={categories}
+            collections={collections}
             locale={locale}
             initialSearchParams={sp}
           />
