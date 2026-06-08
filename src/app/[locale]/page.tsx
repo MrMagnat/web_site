@@ -129,6 +129,7 @@ export default async function HomePage() {
   const settingRows = await prisma.integration.findMany({
     where: { key: { in: [
       "hero_type", "hero_url",
+      "hero_tag", "hero_title", "hero_subtitle", "hero_cta_text", "hero_cta_link",
       "banner_image", "banner_tag", "banner_title_1", "banner_title_2",
       "banner_subtitle", "banner_cta",
     ] } },
@@ -138,6 +139,13 @@ export default async function HomePage() {
 
   const heroType = s["hero_type"] ?? "video";
   const heroUrl  = s["hero_url"]  ?? "/dacha-desk.mp4";
+
+  // Текст приветственного экрана — из БД, с откатом на переводы
+  const heroTag      = s["hero_tag"]      || t("hero.tag");
+  const heroTitle    = s["hero_title"]    || t("hero.title");
+  const heroSubtitle = s["hero_subtitle"] || "";
+  const heroCtaText  = s["hero_cta_text"] || t("hero.cta");
+  const heroCtaLink  = s["hero_cta_link"] || `${prefix}/catalog`;
 
   const bannerImage    = s["banner_image"]    ?? "https://images.unsplash.com/photo-1618220048045-10a6dbdf53e0?auto=format&fit=crop&w=1920&q=80";
   const bannerTag      = s["banner_tag"]      ?? "Весна · Лето 2026";
@@ -225,16 +233,21 @@ export default async function HomePage() {
 
         <div className="absolute bottom-12 left-6 right-6 sm:bottom-20 sm:left-16 sm:right-auto max-w-[520px]">
           <p className="text-[11px] tracking-[0.24em] uppercase text-white/70 mb-4">
-            {t("hero.tag")}
+            {heroTag}
           </p>
-          <h1 className="font-prata text-[clamp(30px,7vw,60px)] leading-[1.1] text-white mb-8 whitespace-pre-line">
-            {t("hero.title")}
+          <h1 className="font-prata text-[clamp(30px,7vw,60px)] leading-[1.1] text-white mb-4 whitespace-pre-line">
+            {heroTitle}
           </h1>
+          {heroSubtitle && (
+            <p className="text-[14px] sm:text-[16px] text-white/75 leading-relaxed mb-8 max-w-[440px]">
+              {heroSubtitle}
+            </p>
+          )}
           <Link
-            href={`${prefix}/catalog`}
-            className="inline-flex items-center gap-3 text-[12px] tracking-[0.2em] uppercase text-white border-b border-white/40 pb-1.5 hover:border-white hover:gap-5 transition-all duration-300"
+            href={heroCtaLink}
+            className={`inline-flex items-center gap-3 text-[12px] tracking-[0.2em] uppercase text-white border-b border-white/40 pb-1.5 hover:border-white hover:gap-5 transition-all duration-300 ${heroSubtitle ? "" : "mt-4"}`}
           >
-            {t("hero.cta")}
+            {heroCtaText}
             <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
         </div>

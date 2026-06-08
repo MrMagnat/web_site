@@ -13,6 +13,7 @@ const PAGE_TITLES: Record<string, string> = {
   company:       "О компании",
   values:        "Наши ценности",
   partnership:   "Партнёрство",
+  contacts:      "Контакты",
 };
 
 export default function PageEditorPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -23,7 +24,6 @@ export default function PageEditorPage({ params }: { params: Promise<{ slug: str
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [preview, setPreview] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -106,40 +106,37 @@ export default function PageEditorPage({ params }: { params: Promise<{ slug: str
           />
         </div>
 
-        {/* HTML editor */}
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-xs font-medium" style={{ color: "#191E1B" }}>
-              HTML-содержимое
+        {/* HTML editor — код и живое превью видны одновременно */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Код */}
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <label className="block text-xs font-medium mb-3" style={{ color: "#191E1B" }}>
+              HTML-код
             </label>
-            <button
-              onClick={() => setPreview(!preview)}
-              className="text-xs px-3 py-1 rounded border"
-              style={{ borderColor: "#e8e0da", color: "#9a9a9a" }}
-            >
-              {preview ? "← HTML" : "Превью →"}
-            </button>
-          </div>
-
-          {preview ? (
-            <div
-              className="prose-custom min-h-[400px] p-4 rounded border text-sm"
-              style={{ borderColor: "#e8e0da", background: "#FAFAFA" }}
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
-          ) : (
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={20}
+              rows={22}
               className="w-full rounded border px-3 py-2.5 text-sm font-mono outline-none resize-y"
               style={{ borderColor: "#e8e0da", background: "#fff", color: "#191E1B", lineHeight: 1.6 }}
               placeholder={`<h2>Заголовок раздела</h2>\n<p>Текст параграфа...</p>\n<table>\n  <tr><th>Размер</th><th>Ширина</th></tr>\n  <tr><td>S</td><td>40 см</td></tr>\n</table>`}
             />
-          )}
-          <p className="mt-2 text-[11px]" style={{ color: "#9a9a9a" }}>
-            Поддерживается HTML: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;table&gt;, &lt;strong&gt;, &lt;a&gt;
-          </p>
+            <p className="mt-2 text-[11px]" style={{ color: "#9a9a9a" }}>
+              Поддерживается HTML: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;table&gt;, &lt;strong&gt;, &lt;a&gt;
+            </p>
+          </div>
+
+          {/* Живое превью */}
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <label className="block text-xs font-medium mb-3" style={{ color: "#191E1B" }}>
+              Превью (как увидит покупатель)
+            </label>
+            <div
+              className="prose-custom min-h-[400px] p-4 rounded border text-sm overflow-x-auto"
+              style={{ borderColor: "#e8e0da", background: "#FAFAFA" }}
+              dangerouslySetInnerHTML={{ __html: content || "<p style='color:#9a9a9a'>Здесь появится превью по мере набора HTML…</p>" }}
+            />
+          </div>
         </div>
       </div>
     </div>

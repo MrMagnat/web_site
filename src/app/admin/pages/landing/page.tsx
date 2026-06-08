@@ -18,6 +18,13 @@ export default function AdminLandingPage() {
   const [heroUrl, setHeroUrl]   = useState("");
   const [heroUploading, setHeroUploading] = useState(false);
 
+  // Hero text
+  const [heroTag,      setHeroTag]      = useState("");
+  const [heroTitle,    setHeroTitle]    = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [heroCtaText,  setHeroCtaText]  = useState("");
+  const [heroCtaLink,  setHeroCtaLink]  = useState("");
+
   // Banner
   const [bannerImage,    setBannerImage]    = useState("");
   const [bannerTag,      setBannerTag]      = useState("Весна · Лето 2026");
@@ -37,6 +44,11 @@ export default function AdminLandingPage() {
       const d: Settings = await r.json();
       if (d.hero_type)       setHeroType(d.hero_type as "video" | "image");
       if (d.hero_url)        setHeroUrl(d.hero_url);
+      if (d.hero_tag)        setHeroTag(d.hero_tag);
+      if (d.hero_title)      setHeroTitle(d.hero_title);
+      if (d.hero_subtitle)   setHeroSubtitle(d.hero_subtitle);
+      if (d.hero_cta_text)   setHeroCtaText(d.hero_cta_text);
+      if (d.hero_cta_link)   setHeroCtaLink(d.hero_cta_link);
       if (d.banner_image)    setBannerImage(d.banner_image);
       if (d.banner_tag)      setBannerTag(d.banner_tag);
       if (d.banner_title_1)  setBannerTitle1(d.banner_title_1);
@@ -94,6 +106,11 @@ export default function AdminLandingPage() {
       body: JSON.stringify({
         hero_type: heroType,
         hero_url:  heroUrl,
+        hero_tag:       heroTag,
+        hero_title:     heroTitle,
+        hero_subtitle:  heroSubtitle,
+        hero_cta_text:  heroCtaText,
+        hero_cta_link:  heroCtaLink,
         banner_image:    bannerImage,
         banner_tag:      bannerTag,
         banner_title_1:  bannerTitle1,
@@ -195,6 +212,48 @@ export default function AdminLandingPage() {
               }
             </div>
           )}
+
+          {/* Текст приветственного экрана */}
+          <div className="mt-6 pt-5 border-t" style={{ borderColor: "#F7F0EC" }}>
+            <p className="text-sm font-semibold mb-4" style={{ color: "#191E1B" }}>
+              Текст на приветственном экране
+            </p>
+
+            <div className="mb-4">
+              <label className={labelCls} style={labelStyle}>Надпись над заголовком</label>
+              <input type="text" value={heroTag} onChange={(e) => setHeroTag(e.target.value)}
+                placeholder="Весна · Лето 2026" className={inputCls} style={inputStyle} />
+            </div>
+
+            <div className="mb-4">
+              <label className={labelCls} style={labelStyle}>Заголовок (можно с переносом строки)</label>
+              <textarea value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)}
+                rows={2} placeholder="Дом, в котором&#10;уютно и красиво"
+                className={`${inputCls} resize-y`} style={inputStyle} />
+            </div>
+
+            <div className="mb-4">
+              <label className={labelCls} style={labelStyle}>Подзаголовок</label>
+              <input type="text" value={heroSubtitle} onChange={(e) => setHeroSubtitle(e.target.value)}
+                placeholder="Текстиль для дома с бесплатной доставкой" className={inputCls} style={inputStyle} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls} style={labelStyle}>Текст кнопки</label>
+                <input type="text" value={heroCtaText} onChange={(e) => setHeroCtaText(e.target.value)}
+                  placeholder="Смотреть коллекцию" className={inputCls} style={inputStyle} />
+              </div>
+              <div>
+                <label className={labelCls} style={labelStyle}>Ссылка кнопки</label>
+                <input type="text" value={heroCtaLink} onChange={(e) => setHeroCtaLink(e.target.value)}
+                  placeholder="/catalog" className={inputCls} style={inputStyle} />
+              </div>
+            </div>
+            <p className="text-[11px] mt-2" style={{ color: "#9a9a9a" }}>
+              Ссылка — путь внутри сайта, например <b>/catalog</b>, <b>/collections</b> или <b>/info/contacts</b>
+            </p>
+          </div>
         </div>
 
         {/* ── Баннер «Новая коллекция» ─────────────────────────── */}

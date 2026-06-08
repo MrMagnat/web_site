@@ -72,7 +72,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href={`${prefix}/`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
+                <Link href={`${prefix}/info/contacts`} className="text-[13px] text-white/55 hover:text-white transition-colors duration-200">
                   {t("links.contacts")}
                 </Link>
               </li>

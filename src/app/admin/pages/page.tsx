@@ -11,6 +11,7 @@ const PAGES = [
   { slug: "company",         title: "О компании" },
   { slug: "values",          title: "Наши ценности" },
   { slug: "partnership",     title: "Партнёрство" },
+  { slug: "contacts",        title: "Контакты" },
 ];
 
 export default function AdminPagesPage() {

@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/adminAuth";
 
 const ALL_KEYS = [
   "hero_type", "hero_url",
+  "hero_tag", "hero_title", "hero_subtitle", "hero_cta_text", "hero_cta_link",
   "banner_image", "banner_tag", "banner_title_1", "banner_title_2",
   "banner_subtitle", "banner_cta",
 ] as const;

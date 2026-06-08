@@ -87,6 +87,10 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     load(statusTab);
+    // Авто-обновление: заказы, оплаченные через ЮKassa (webhook ставит PAID),
+    // появляются сами без перезагрузки страницы.
+    const id = setInterval(() => load(statusTab), 20000);
+    return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusTab]);
 
