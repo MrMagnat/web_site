@@ -91,6 +91,7 @@ export default function EditProductPage() {
           descriptionEn: p.descriptionEn,
           sku: p.sku,
           categoryId: p.categoryId,
+          collectionId: p.collectionId ?? "",
           price: String(p.price),
           discountPrice: p.discountPrice ? String(p.discountPrice) : "",
           images: p.images ?? [],

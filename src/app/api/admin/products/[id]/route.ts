@@ -50,6 +50,11 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    // Normalize optional collection relation: empty string => null
+    if ("collectionId" in body) {
+      body.collectionId = body.collectionId || null;
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: body,

@@ -7,6 +7,7 @@ import type { ProductWithCategory } from "@/components/shop/ProductModal";
 
 interface SearchParams {
   category?: string;
+  collection?: string;
   sort?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -27,7 +28,7 @@ async function fetchProducts(_sp: SearchParams): Promise<ProductWithCategory[]> 
       where: { isActive: true },
       orderBy: { createdAt: "desc" },
       take: 500,
-      include: { category: true },
+      include: { category: true, collection: true },
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,6 +62,7 @@ async function fetchProducts(_sp: SearchParams): Promise<ProductWithCategory[]> 
         nameRu: p.category.nameRu,
         nameEn: p.category.nameEn,
       },
+      collectionSlug: p.collection?.slug ?? null,
     }));
   } catch {
     return FALLBACK_PRODUCTS;

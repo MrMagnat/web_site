@@ -27,6 +27,7 @@ export interface ProductWithCategory {
   isNew: boolean;
   isFeatured: boolean;
   category: ProductCategory;
+  collectionSlug?: string | null;
 }
 
 interface Props {

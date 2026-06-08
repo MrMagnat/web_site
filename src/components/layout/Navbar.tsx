@@ -60,9 +60,10 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
             <li key={key}>
               <Link
                 href={
-                  key === "catalog"  ? `${prefix}/catalog` :
-                  key === "about"    ? `${prefix}/about` :
-                  key === "delivery" ? `${prefix}/return` :
+                  key === "catalog"     ? `${prefix}/catalog` :
+                  key === "collections" ? `${prefix}/collections` :
+                  key === "about"       ? `${prefix}/about` :
+                  key === "delivery"    ? `${prefix}/return` :
                   `${prefix}/`
                 }
                 className={`text-[13px] tracking-[0.16em] uppercase transition-colors duration-300 link-animated ${
@@ -134,9 +135,10 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               <li key={key}>
                 <Link
                   href={
-                    key === "catalog"  ? `${prefix}/catalog` :
-                    key === "about"    ? `${prefix}/about` :
-                    key === "delivery" ? `${prefix}/return` :
+                    key === "catalog"     ? `${prefix}/catalog` :
+                    key === "collections" ? `${prefix}/collections` :
+                    key === "about"       ? `${prefix}/about` :
+                    key === "delivery"    ? `${prefix}/return` :
                     `${prefix}/`
                   }
                   className="font-prata text-[22px] text-white/90 hover:text-white transition-colors"

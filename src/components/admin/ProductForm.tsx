@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Plus, X, GripVertical, Wand2 } from "lucide-react";
@@ -22,6 +22,7 @@ export interface ProductFormData {
   descriptionEn: string;
   sku: string;
   categoryId: string;
+  collectionId: string;
   price: string;
   discountPrice: string;
   images: string[];
@@ -35,6 +36,11 @@ export interface ProductFormData {
 }
 
 interface Category {
+  id: string;
+  nameRu: string;
+}
+
+interface Collection {
   id: string;
   nameRu: string;
 }
@@ -142,6 +148,7 @@ export default function ProductForm({
     descriptionEn: initial?.descriptionEn ?? "",
     sku: initial?.sku ?? generateSku(),
     categoryId: initial?.categoryId ?? "",
+    collectionId: initial?.collectionId ?? "",
     price: initial?.price ?? "",
     discountPrice: initial?.discountPrice ?? "",
     images: initial?.images ?? [],
@@ -154,7 +161,17 @@ export default function ProductForm({
     isActive: initial?.isActive ?? true,
   });
 
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [sizeInput, setSizeInput] = useState("");
+
+  useEffect(() => {
+    fetch("/api/collections")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d?.collections) setCollections(d.collections);
+      })
+      .catch(() => {});
+  }, []);
   const [colorInput, setColorInput] = useState({ name: "", hex: "#000000" });
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -357,6 +374,24 @@ export default function ProductForm({
               className={inputCls}
               style={inputStyle}
             />
+          </div>
+          <div>
+            <label className={labelCls} style={labelStyle}>
+              Коллекция
+            </label>
+            <select
+              value={form.collectionId}
+              onChange={(e) => set("collectionId", e.target.value)}
+              className={inputCls}
+              style={inputStyle}
+            >
+              <option value="">— нет —</option>
+              {collections.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nameRu}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

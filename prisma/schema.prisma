@@ -46,8 +46,26 @@ model Product {
   categoryId      String
   category        Category  @relation(fields: [categoryId], references: [id])
 
+  collectionId    String?
+  collection      Collection? @relation(fields: [collectionId], references: [id])
+
   analytics       ProductAnalytics[]
   orderItems      OrderItem[]
+}
+
+// ─── КОЛЛЕКЦИИ (группы товаров, как категории) ─────────────────────
+model Collection {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  nameRu      String
+  nameEn      String    @default("")
+  image       String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
 }
 
 // ─── АНАЛИТИКА ТОВАРОВ ─────────────────────────────────────────────

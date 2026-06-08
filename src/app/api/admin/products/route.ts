@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       isFeatured,
       isActive,
       categoryId,
+      collectionId,
     } = body;
 
     const product = await prisma.product.create({
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest) {
         isFeatured: isFeatured ?? false,
         isActive: isActive ?? true,
         categoryId,
+        collectionId: collectionId || null,
       },
       include: { category: true },
     });

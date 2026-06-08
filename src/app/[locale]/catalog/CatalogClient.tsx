@@ -21,6 +21,7 @@ interface Props {
   locale: string;
   initialSearchParams: {
     category?: string;
+    collection?: string;
     sort?: string;
     minPrice?: string;
     maxPrice?: string;
@@ -47,6 +48,8 @@ export default function CatalogClient({
   const { addItem, openCart } = useCartStore();
   const isRu = locale === "ru";
 
+  const collectionParam = initialSearchParams.collection ?? null;
+
   // Filter state
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     initialSearchParams.category ? [initialSearchParams.category] : []
@@ -69,6 +72,9 @@ export default function CatalogClient({
   const filtered = useMemo(() => {
     let result = [...products];
 
+    if (collectionParam) {
+      result = result.filter((p) => p.collectionSlug === collectionParam);
+    }
     if (selectedCategories.length > 0) {
       result = result.filter(
         (p) =>
@@ -108,6 +114,7 @@ export default function CatalogClient({
     return result;
   }, [
     products,
+    collectionParam,
     selectedCategories,
     sort,
     minPrice,
