@@ -202,7 +202,7 @@ export default function CartPage() {
         return;
       }
 
-      // Заказ создан — создаём платёж ЮKassa и уходим на страницу оплаты
+      // Заказ создан — создаём платёж Т-Банка и уходим на страницу оплаты
       const payRes = await fetch("/api/payments/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -212,7 +212,7 @@ export default function CartPage() {
 
       if (payRes.ok && payData.confirmationUrl) {
         clearCart();
-        // редирект на защищённую страницу оплаты ЮKassa
+        // редирект на защищённую страницу оплаты Т-Банка
         window.location.href = payData.confirmationUrl;
       } else {
         // Заказ создан, но оплату инициировать не удалось — не теряем заказ
@@ -496,7 +496,7 @@ export default function CartPage() {
                       <div>
                         <p className="text-[14px] font-medium text-[#191E1B] mb-1">Онлайн-оплата картой или СБП</p>
                         <p className="text-[12px] text-[#9a9a9a] leading-relaxed">
-                          После нажатия кнопки вы перейдёте на защищённую страницу оплаты ЮKassa.
+                          После нажатия кнопки вы перейдёте на защищённую страницу оплаты Т-Банка.
                           После оплаты заказ автоматически уйдёт в обработку.
                         </p>
                       </div>

@@ -25,22 +25,21 @@ interface IntegrationSection {
 export default function AdminIntegrationsPage() {
   const { getAuthHeaders } = useAdminAuth();
   const [sections, setSections] = useState<IntegrationSection[]>([
-    { id: "yookassa", title: "ЮKassa (оплата)", expanded: true },
+    { id: "tbank", title: "Т-Банк (оплата)", expanded: true },
     { id: "ozon", title: "Ozon Логистика", expanded: false },
     { id: "promo", title: "Промокоды", expanded: false },
   ]);
 
-  // ЮKassa
-  const [kassaShopId, setKassaShopId] = useState("");
-  const [kassaSecret, setKassaSecret] = useState("");
-  const [kassaFiscal, setKassaFiscal] = useState(false);
-  const [kassaVat, setKassaVat] = useState("1");
-  const [kassaSaving, setKassaSaving] = useState(false);
-  const [kassaMsg, setKassaMsg] = useState("");
+  // Т-Банк
+  const [tbankTerminal, setTbankTerminal] = useState("");
+  const [tbankPassword, setTbankPassword] = useState("");
+  const [tbankSaving, setTbankSaving] = useState(false);
+  const [tbankMsg, setTbankMsg] = useState("");
 
   // Ozon
   const [ozonClientId, setOzonClientId] = useState("");
   const [ozonApiKey, setOzonApiKey] = useState("");
+  const [ozonAutoSend, setOzonAutoSend] = useState(false);
   const [ozonSaving, setOzonSaving] = useState(false);
   const [ozonMsg, setOzonMsg] = useState("");
   const [importing, setImporting] = useState(false);
@@ -65,11 +64,10 @@ export default function AdminIntegrationsPage() {
         const d = await res.json();
         const intg = d.integrations ?? {};
         if (intg.ozon_client_id) setOzonClientId(intg.ozon_client_id);
-        if (intg.yookassa_shop_id) setKassaShopId(intg.yookassa_shop_id);
-        if (intg.yookassa_fiscalization) setKassaFiscal(intg.yookassa_fiscalization === "1");
-        if (intg.yookassa_vat_code) setKassaVat(intg.yookassa_vat_code);
-        // секретный ключ приходит замаскированным — показываем плейсхолдер, не значение
-        if (intg.yookassa_secret_key) setKassaSecret("");
+        if (intg.ozon_auto_send) setOzonAutoSend(intg.ozon_auto_send === "1");
+        if (intg.tbank_terminal_key) setTbankTerminal(intg.tbank_terminal_key);
+        // пароль приходит замаскированным — не подставляем его в поле
+        if (intg.tbank_password) setTbankPassword("");
       }
     }
     load();
@@ -96,8 +94,8 @@ export default function AdminIntegrationsPage() {
     }
   }
 
-  async function saveKassa() {
-    setKassaSaving(true);
+  async function saveTBank() {
+    setTbankSaving(true);
     const headers = getAuthHeaders();
     const reqs: Promise<Response>[] = [];
     const post = (key: string, value: string) =>
@@ -109,36 +107,31 @@ export default function AdminIntegrationsPage() {
         })
       );
 
-    if (kassaShopId) post("yookassa_shop_id", kassaShopId);
-    // секрет отправляем ТОЛЬКО если ввели новый (пустое поле = не менять)
-    if (kassaSecret) post("yookassa_secret_key", kassaSecret);
-    post("yookassa_fiscalization", kassaFiscal ? "1" : "0");
-    post("yookassa_vat_code", kassaVat);
+    if (tbankTerminal) post("tbank_terminal_key", tbankTerminal);
+    // пароль отправляем ТОЛЬКО если ввели новый (пустое поле = не менять)
+    if (tbankPassword) post("tbank_password", tbankPassword);
 
     await Promise.all(reqs);
-    setKassaSecret(""); // не держим секрет в памяти формы
-    setKassaMsg("Сохранено");
-    setTimeout(() => setKassaMsg(""), 3000);
-    setKassaSaving(false);
+    setTbankPassword(""); // не держим секрет в памяти формы
+    setTbankMsg("Сохранено");
+    setTimeout(() => setTbankMsg(""), 3000);
+    setTbankSaving(false);
   }
 
   async function saveOzon() {
     setOzonSaving(true);
     const headers = getAuthHeaders();
-    await Promise.all([
-      ozonClientId &&
-        fetch("/api/admin/integrations", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ key: "ozon_client_id", value: ozonClientId }),
-        }),
-      ozonApiKey &&
-        fetch("/api/admin/integrations", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ key: "ozon_api_key", value: ozonApiKey }),
-        }),
-    ].filter(Boolean));
+    const post = (key: string, value: string) =>
+      fetch("/api/admin/integrations", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ key, value }),
+      });
+    const reqs: Promise<Response>[] = [];
+    if (ozonClientId) reqs.push(post("ozon_client_id", ozonClientId));
+    if (ozonApiKey) reqs.push(post("ozon_api_key", ozonApiKey));
+    reqs.push(post("ozon_auto_send", ozonAutoSend ? "1" : "0"));
+    await Promise.all(reqs);
     setOzonMsg("Сохранено");
     setTimeout(() => setOzonMsg(""), 3000);
     setOzonSaving(false);
@@ -222,22 +215,22 @@ export default function AdminIntegrationsPage() {
 
       <div className="flex flex-col gap-4">
 
-        {/* ── ЮKassa ───────────────────────────────────────────── */}
+        {/* ── Т-Банк ───────────────────────────────────────────── */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <button
             className="w-full flex items-center justify-between px-5 py-4 text-left"
-            onClick={() => toggleSection("yookassa")}
+            onClick={() => toggleSection("tbank")}
           >
             <span className="text-sm font-semibold" style={{ color: "#191E1B" }}>
-              ЮKassa — приём оплаты
+              Т-Банк — приём оплаты
             </span>
-            {sections.find((s) => s.id === "yookassa")?.expanded ? (
+            {sections.find((s) => s.id === "tbank")?.expanded ? (
               <ChevronUp size={16} style={{ color: "#9a9a9a" }} />
             ) : (
               <ChevronDown size={16} style={{ color: "#9a9a9a" }} />
             )}
           </button>
-          {sections.find((s) => s.id === "yookassa")?.expanded && (
+          {sections.find((s) => s.id === "tbank")?.expanded && (
             <div className="px-5 pb-5 border-t" style={{ borderColor: "#F7F0EC" }}>
 
               {/* Info */}
@@ -248,87 +241,48 @@ export default function AdminIntegrationsPage() {
                 <Info size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#3F1111" }} />
                 <div className="text-[12px] leading-relaxed" style={{ color: "#9a9a9a" }}>
                   <p className="font-medium mb-0.5" style={{ color: "#191E1B" }}>
-                    Ключи из личного кабинета ЮKassa
+                    Ключи терминала из личного кабинета Т-Банка
                   </p>
                   <p>
-                    <a href="https://yookassa.ru/my" target="_blank" rel="noopener noreferrer"
-                      className="underline" style={{ color: "#3F1111" }}>
-                      yookassa.ru/my
-                    </a>{" "}
-                    → Интеграция → Ключи API. Секретный ключ хранится в БД в
-                    зашифрованном виде и не показывается обратно.
+                    Эквайринг → ваш терминал → Terminal Key и пароль.
+                    Пароль хранится в БД в зашифрованном виде и не показывается обратно.
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelStyle} style={{ color: "#191E1B" }}>shopId (идентификатор магазина)</label>
-                  <input type="text" value={kassaShopId}
-                    onChange={(e) => setKassaShopId(e.target.value)}
-                    placeholder="123456" className={inputCls} style={inputStyle} />
+                  <label className={labelStyle} style={{ color: "#191E1B" }}>Terminal Key</label>
+                  <input type="text" value={tbankTerminal}
+                    onChange={(e) => setTbankTerminal(e.target.value)}
+                    placeholder="1234567890123" className={inputCls} style={inputStyle} />
                 </div>
                 <div>
-                  <label className={labelStyle} style={{ color: "#191E1B" }}>Секретный ключ</label>
-                  <input type="password" value={kassaSecret}
-                    onChange={(e) => setKassaSecret(e.target.value)}
+                  <label className={labelStyle} style={{ color: "#191E1B" }}>Пароль терминала</label>
+                  <input type="password" value={tbankPassword}
+                    onChange={(e) => setTbankPassword(e.target.value)}
                     placeholder="Оставьте пустым, чтобы не менять" className={inputCls} style={inputStyle} />
                 </div>
               </div>
 
-              {/* Фискализация */}
-              <div className="mt-4 flex items-start gap-3">
-                <button
-                  type="button"
-                  onClick={() => setKassaFiscal((v) => !v)}
-                  className="mt-0.5"
-                  aria-label="Фискализация"
-                >
-                  {kassaFiscal
-                    ? <ToggleRight size={26} style={{ color: "#059669" }} />
-                    : <ToggleLeft size={26} style={{ color: "#9a9a9a" }} />}
-                </button>
-                <div className="flex-1">
-                  <p className="text-sm font-medium" style={{ color: "#191E1B" }}>
-                    Отправлять чек 54-ФЗ
-                  </p>
-                  <p className="text-[12px]" style={{ color: "#9a9a9a" }}>
-                    Включайте, только если фискализация подключена в ЮKassa. Иначе оплата вернёт ошибку.
-                  </p>
-                </div>
-                {kassaFiscal && (
-                  <div>
-                    <label className={labelStyle} style={{ color: "#191E1B" }}>Ставка НДС</label>
-                    <select value={kassaVat} onChange={(e) => setKassaVat(e.target.value)}
-                      className={inputCls} style={inputStyle}>
-                      <option value="1">Без НДС (УСН)</option>
-                      <option value="2">0%</option>
-                      <option value="3">10%</option>
-                      <option value="4">20%</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-
               {/* Webhook URL */}
               <div className="mt-4 px-4 py-3 rounded-lg text-[12px]" style={{ background: "#F7F0EC", color: "#9a9a9a" }}>
-                <p className="font-medium mb-1" style={{ color: "#191E1B" }}>URL для уведомлений (webhook)</p>
-                <p>В кабинете ЮKassa → HTTP-уведомления укажите:</p>
+                <p className="font-medium mb-1" style={{ color: "#191E1B" }}>URL для уведомлений (Notification URL)</p>
+                <p>В кабинете Т-Банка → настройки терминала укажите:</p>
                 <code className="block mt-1 px-2 py-1 rounded text-[11px] break-all" style={{ background: "#fff", color: "#3F1111" }}>
-                  https://andruafamil.ru/api/webhooks/yookassa
+                  https://andruafamil.ru/api/webhooks/tbank
                 </code>
-                <p className="mt-1">События: <b>payment.succeeded</b>, <b>payment.canceled</b>.</p>
               </div>
 
               <div className="flex items-center gap-3 mt-4">
-                <button onClick={saveKassa} disabled={kassaSaving}
+                <button onClick={saveTBank} disabled={tbankSaving}
                   className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
                   style={{ background: "#3F1111", color: "#FAFAFA" }}>
-                  {kassaSaving ? "Сохранение..." : "Сохранить"}
+                  {tbankSaving ? "Сохранение..." : "Сохранить"}
                 </button>
-                {kassaMsg && (
+                {tbankMsg && (
                   <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>
-                    <Check size={14} /> {kassaMsg}
+                    <Check size={14} /> {tbankMsg}
                   </span>
                 )}
               </div>
@@ -409,6 +363,29 @@ export default function AdminIntegrationsPage() {
                 </div>
               </div>
 
+              {/* Автоотправка в Ozon после оплаты */}
+              <div className="mt-4 flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOzonAutoSend((v) => !v)}
+                  className="mt-0.5"
+                  aria-label="Автоотправка в Ozon"
+                >
+                  {ozonAutoSend
+                    ? <ToggleRight size={26} style={{ color: "#059669" }} />
+                    : <ToggleLeft size={26} style={{ color: "#9a9a9a" }} />}
+                </button>
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{ color: "#191E1B" }}>
+                    Автоматически отправлять заказ в Ozon после оплаты
+                  </p>
+                  <p className="text-[12px]" style={{ color: "#9a9a9a" }}>
+                    Включено — сразу после оплаты заказ уходит в доставку Ozon.
+                    Выключено — каждый заказ отправляете вручную кнопкой «Отправить в Ozon».
+                  </p>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 mt-4 flex-wrap">
                 <button
                   onClick={saveOzon}
@@ -416,7 +393,7 @@ export default function AdminIntegrationsPage() {
                   className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
                   style={{ background: "#3F1111", color: "#FAFAFA" }}
                 >
-                  {ozonSaving ? "Сохранение..." : "Сохранить ключи"}
+                  {ozonSaving ? "Сохранение..." : "Сохранить"}
                 </button>
                 {ozonMsg && (
                   <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>

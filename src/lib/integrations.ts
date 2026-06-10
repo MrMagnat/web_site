@@ -42,18 +42,18 @@ export async function getIntegrations(
   }
 }
 
-/** Удобный хелпер — ЮКасса */
-export async function getYooKassaCreds(): Promise<{
-  shopId: string | null;
-  secretKey: string | null;
+/** Удобный хелпер — Т-Банк (интернет-эквайринг) */
+export async function getTBankCreds(): Promise<{
+  terminalKey: string | null;
+  password: string | null;
 }> {
   const vals = await getIntegrations([
-    "yookassa_shop_id",
-    "yookassa_secret_key",
+    "tbank_terminal_key",
+    "tbank_password",
   ]);
   return {
-    shopId:    vals["yookassa_shop_id"],
-    secretKey: vals["yookassa_secret_key"],
+    terminalKey: vals["tbank_terminal_key"],
+    password:    vals["tbank_password"],
   };
 }
 

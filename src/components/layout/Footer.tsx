@@ -83,9 +83,10 @@ export default function Footer() {
         {/* Legal info */}
         <div className="border-t border-white/8 pt-6 mb-4">
           <p className="text-[11px] text-white/25 leading-relaxed">
-            ИП Папян Артём Арменович&nbsp;&nbsp;·&nbsp;&nbsp;
-            ИНН&nbsp;771892840474&nbsp;&nbsp;·&nbsp;&nbsp;
-            Юридический адрес: 368622, Респ. Дагестан, р-н Дербентский, с. Чинар, ул. Маяковского, д. 6
+            ООО «АФ»&nbsp;&nbsp;·&nbsp;&nbsp;
+            ОГРН&nbsp;1267700195795&nbsp;&nbsp;·&nbsp;&nbsp;
+            ИНН&nbsp;7710140679&nbsp;&nbsp;·&nbsp;&nbsp;
+            Юридический адрес: 127287, г. Москва, ул. Хуторская 2-я, д. 38А, стр. 2б
           </p>
         </div>
 

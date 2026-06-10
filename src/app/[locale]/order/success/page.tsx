@@ -13,7 +13,7 @@ export default async function OrderSuccessPage({ params, searchParams }: PagePro
   const { num } = await searchParams;
   const orderNumber = num ?? "AF-????";
 
-  // Читаем актуальный статус заказа (оплата подтверждается webhook'ом ЮKassa)
+  // Читаем актуальный статус заказа (оплата подтверждается webhook'ом Т-Банка)
   let status: string | null = null;
   if (num) {
     const order = await prisma.order.findFirst({
