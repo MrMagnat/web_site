@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Search, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, RefreshCw, Trash2 } from "lucide-react";
 
 interface OrderItem {
   id: string;
@@ -71,6 +71,7 @@ export default function AdminOrdersPage() {
   const [ozonError, setOzonError] = useState<Record<string, string>>({});
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function load(status?: string) {
     const headers = getAuthHeaders();
@@ -135,6 +136,28 @@ export default function AdminOrdersPage() {
       setOzonError((prev) => ({ ...prev, [orderId]: "Ошибка соединения" }));
     } finally {
       setSendingOzon(null);
+    }
+  }
+
+  async function handleDeleteOrder(orderId: string, number: string) {
+    if (!confirm(`Удалить заказ ${number}? Действие необратимо.`)) return;
+    setDeletingId(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        setExpandedId(null);
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Не удалось удалить заказ");
+      }
+    } catch {
+      alert("Ошибка соединения");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -390,6 +413,19 @@ export default function AdminOrdersPage() {
                                 </tbody>
                               </table>
                             </div>
+                          </div>
+
+                          {/* Удаление заказа */}
+                          <div className="mt-6 pt-4 flex justify-end" style={{ borderTop: "1px solid #F7F0EC" }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteOrder(o.id, o.number); }}
+                              disabled={deletingId === o.id}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                              style={{ background: "#fee2e2", color: "#dc2626" }}
+                            >
+                              <Trash2 size={13} />
+                              {deletingId === o.id ? "Удаление…" : "Удалить заказ"}
+                            </button>
                           </div>
                         </td>
                       </tr>

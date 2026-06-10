@@ -53,3 +53,29 @@ export async function PUT(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!isAdmin(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+
+    // Позиции (OrderItem) удаляются каскадно, но возвраты (Return) ссылаются
+    // на заказ без каскада — удаляем их явно в одной транзакции.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await prisma.$transaction(async (tx: any) => {
+      await tx.return.deleteMany({ where: { orderId: id } });
+      await tx.order.delete({ where: { id } });
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("DELETE /api/admin/orders/[id] error:", error);
+    return NextResponse.json({ error: "Не удалось удалить заказ" }, { status: 500 });
+  }
+}
