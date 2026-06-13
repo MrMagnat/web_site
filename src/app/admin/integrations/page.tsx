@@ -27,6 +27,7 @@ export default function AdminIntegrationsPage() {
   const [sections, setSections] = useState<IntegrationSection[]>([
     { id: "tbank", title: "Т-Банк (оплата)", expanded: true },
     { id: "ozon", title: "Ozon Логистика", expanded: false },
+    { id: "dadata", title: "DaData (подсказки адресов)", expanded: false },
     { id: "promo", title: "Промокоды", expanded: false },
   ]);
 
@@ -35,6 +36,11 @@ export default function AdminIntegrationsPage() {
   const [tbankPassword, setTbankPassword] = useState("");
   const [tbankSaving, setTbankSaving] = useState(false);
   const [tbankMsg, setTbankMsg] = useState("");
+
+  // DaData (подсказки адресов)
+  const [daToken, setDaToken] = useState("");
+  const [daSaving, setDaSaving] = useState(false);
+  const [daMsg, setDaMsg] = useState("");
 
   // Ozon
   const [ozonClientId, setOzonClientId] = useState("");
@@ -68,6 +74,8 @@ export default function AdminIntegrationsPage() {
         if (intg.tbank_terminal_key) setTbankTerminal(intg.tbank_terminal_key);
         // пароль приходит замаскированным — не подставляем его в поле
         if (intg.tbank_password) setTbankPassword("");
+        // токен DaData замаскирован — поле оставляем пустым
+        if (intg.dadata_token) setDaToken("");
       }
     }
     load();
@@ -116,6 +124,20 @@ export default function AdminIntegrationsPage() {
     setTbankMsg("Сохранено");
     setTimeout(() => setTbankMsg(""), 3000);
     setTbankSaving(false);
+  }
+
+  async function saveDaData() {
+    if (!daToken) { setDaMsg("Введите токен"); setTimeout(() => setDaMsg(""), 3000); return; }
+    setDaSaving(true);
+    await fetch("/api/admin/integrations", {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ key: "dadata_token", value: daToken }),
+    });
+    setDaToken("");
+    setDaMsg("Сохранено");
+    setTimeout(() => setDaMsg(""), 3000);
+    setDaSaving(false);
   }
 
   async function saveOzon() {
@@ -437,6 +459,61 @@ export default function AdminIntegrationsPage() {
                       ? `❌ ${importResult.error}`
                       : `✅ ${importResult.message}`}
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── DaData ───────────────────────────────────────────── */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between px-5 py-4 text-left"
+            onClick={() => toggleSection("dadata")}
+          >
+            <span className="text-sm font-semibold" style={{ color: "#191E1B" }}>
+              DaData — подсказки адресов
+            </span>
+            {sections.find((s) => s.id === "dadata")?.expanded ? (
+              <ChevronUp size={16} style={{ color: "#9a9a9a" }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: "#9a9a9a" }} />
+            )}
+          </button>
+          {sections.find((s) => s.id === "dadata")?.expanded && (
+            <div className="px-5 pb-5 border-t" style={{ borderColor: "#F7F0EC" }}>
+              <div className="mt-4 mb-5 px-4 py-3 rounded-lg flex gap-3"
+                style={{ background: "#F7F0EC", borderLeft: "3px solid #3F1111" }}>
+                <Info size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#3F1111" }} />
+                <div className="text-[12px] leading-relaxed" style={{ color: "#9a9a9a" }}>
+                  <p className="font-medium mb-0.5" style={{ color: "#191E1B" }}>
+                    Быстрые подсказки адресов в корзине
+                  </p>
+                  <p>
+                    Бесплатная регистрация на{" "}
+                    <a href="https://dadata.ru/profile/#info" target="_blank" rel="noopener noreferrer"
+                      className="underline" style={{ color: "#3F1111" }}>dadata.ru</a>{" "}
+                    → Профиль → API-ключи → скопируйте <b>«API-ключ»</b> (token).
+                    После сохранения адреса будут подсказываться по части слова.
+                  </p>
+                </div>
+              </div>
+
+              <label className={labelStyle} style={{ color: "#191E1B" }}>API-ключ (token)</label>
+              <input type="password" value={daToken}
+                onChange={(e) => setDaToken(e.target.value)}
+                placeholder="Оставьте пустым, чтобы не менять" className={inputCls} style={inputStyle} />
+
+              <div className="flex items-center gap-3 mt-4">
+                <button onClick={saveDaData} disabled={daSaving}
+                  className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
+                  style={{ background: "#3F1111", color: "#FAFAFA" }}>
+                  {daSaving ? "Сохранение..." : "Сохранить"}
+                </button>
+                {daMsg && (
+                  <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>
+                    <Check size={14} /> {daMsg}
+                  </span>
                 )}
               </div>
             </div>

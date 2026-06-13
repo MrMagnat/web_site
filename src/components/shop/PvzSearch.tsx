@@ -2,35 +2,11 @@
 import { useState, useRef, useEffect } from "react";
 
 /**
- * Подсказки адреса для пункта выдачи. Используем Photon (photon.komoot.io) —
- * autocomplete-геокодер на данных OpenStreetMap: ищет по части слова,
- * ранжирует варианты, без API-ключа. Фильтруем по России.
+ * Подсказки адреса для пункта выдачи. Запрашиваем у НАШЕГО сервера
+ * (/api/geo/suggest) — он ходит в DaData (или Photon как запасной),
+ * поэтому подсказки работают из России и по части слова.
  */
-interface PhotonFeature {
-  properties: {
-    osm_id?: number;
-    name?: string;
-    street?: string;
-    housenumber?: string;
-    city?: string;
-    district?: string;
-    locality?: string;
-    state?: string;
-    postcode?: string;
-    countrycode?: string;
-    type?: string;
-  };
-}
-
-function buildAddress(p: PhotonFeature["properties"]): string {
-  const cityLike = p.city ?? p.locality ?? p.district ?? "";
-  const streetLike = [p.street, p.housenumber].filter(Boolean).join(", ");
-  const namePart = p.name && p.name !== p.street ? p.name : "";
-  return [cityLike, streetLike || namePart, p.state]
-    .filter(Boolean)
-    .filter((v, i, arr) => arr.indexOf(v) === i)
-    .join(", ");
-}
+interface Suggestion { label: string; detail?: string }
 
 interface Props {
   value: string;
@@ -40,7 +16,7 @@ interface Props {
 
 export default function PvzSearch({ value, onChange, error }: Props) {
   const [query, setQuery] = useState(value || "");
-  const [results, setResults] = useState<PhotonFeature[]>([]);
+  const [results, setResults] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -62,26 +38,13 @@ export default function PvzSearch({ value, onChange, error }: Props) {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
-      // lat/lon — приоритет к центру РФ; lang=ru; больше лимит для разных вариантов
-      const url =
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}` +
-        `&lang=ru&limit=12&lat=55.75&lon=37.62`;
-      const res = await fetch(url, { signal: ctrl.signal });
+      const res = await fetch(`/api/geo/suggest?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
       const data = await res.json();
-      const feats: PhotonFeature[] = (data.features ?? []).filter(
-        (f: PhotonFeature) => f.properties?.countrycode === "RU"
-      );
-      const seen = new Set<string>();
-      const uniq = feats.filter((f) => {
-        const a = buildAddress(f.properties);
-        if (!a || seen.has(a)) return false;
-        seen.add(a);
-        return true;
-      });
-      setResults(uniq.slice(0, 8));
-      setOpen(uniq.length > 0);
+      const list: Suggestion[] = data.suggestions ?? [];
+      setResults(list);
+      setOpen(true);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setResults([]);
+      if ((e as Error).name !== "AbortError") { setResults([]); }
     } finally {
       setLoading(false);
     }
@@ -92,13 +55,12 @@ export default function PvzSearch({ value, onChange, error }: Props) {
     setQuery(val);
     onChange(val);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => search(val), 350);
+    timerRef.current = setTimeout(() => search(val), 250);
   };
 
-  const handleSelect = (f: PhotonFeature) => {
-    const addr = buildAddress(f.properties);
-    setQuery(addr);
-    onChange(addr);
+  const handleSelect = (s: Suggestion) => {
+    setQuery(s.label);
+    onChange(s.label);
     setOpen(false);
     setResults([]);
   };
@@ -120,6 +82,7 @@ export default function PvzSearch({ value, onChange, error }: Props) {
           onChange={handleInput}
           onFocus={() => results.length > 0 && setOpen(true)}
           placeholder="Город, улица, дом — начните вводить"
+          autoComplete="off"
           className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors pr-10 ${
             error ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
           }`}
@@ -138,23 +101,18 @@ export default function PvzSearch({ value, onChange, error }: Props) {
 
       {open && results.length > 0 && (
         <ul className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-[#e8e0da] shadow-lg max-h-72 overflow-y-auto">
-          {results.map((f, i) => {
-            const addr = buildAddress(f.properties);
-            return (
-              <li key={`${f.properties.osm_id ?? i}-${i}`}>
-                <button
-                  type="button"
-                  onMouseDown={(e) => { e.preventDefault(); handleSelect(f); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-[#F7F0EC] transition-colors border-b border-[#f0ebe6] last:border-0"
-                >
-                  <p className="text-[13px] text-[#191E1B] leading-snug">{addr}</p>
-                  {f.properties.postcode && (
-                    <p className="text-[11px] text-[#9a9a9a] mt-0.5">{f.properties.postcode}</p>
-                  )}
-                </button>
-              </li>
-            );
-          })}
+          {results.map((s, i) => (
+            <li key={`${s.label}-${i}`}>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-[#F7F0EC] transition-colors border-b border-[#f0ebe6] last:border-0"
+              >
+                <p className="text-[13px] text-[#191E1B] leading-snug">{s.label}</p>
+                {s.detail && <p className="text-[11px] text-[#9a9a9a] mt-0.5">{s.detail}</p>}
+              </button>
+            </li>
+          ))}
         </ul>
       )}
 
@@ -165,7 +123,7 @@ export default function PvzSearch({ value, onChange, error }: Props) {
       )}
 
       <p className="mt-1.5 text-[11px] text-[#9a9a9a]">
-        Введите адрес рядом с нужным ПВЗ — поиск работает по части слова
+        Введите адрес рядом с нужным ПВЗ — подсказки появляются по мере ввода
       </p>
     </div>
   );
