@@ -68,6 +68,15 @@ model Collection {
   products    Product[]
 }
 
+// ─── ПОКУПАТЕЛИ (личный кабинет) ───────────────────────────────────
+model Customer {
+  id           String   @id @default(cuid())
+  phone        String   @unique  // нормализованный: только цифры, последние 10
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+}
+
 // ─── АНАЛИТИКА ТОВАРОВ ─────────────────────────────────────────────
 model ProductAnalytics {
   id          String   @id @default(cuid())

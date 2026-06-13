@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Search, ShoppingBag, Menu, X } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, User } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { usePageView } from "@/hooks/usePageView";
 
@@ -97,6 +97,17 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
             title={t("search")}
           >
             <Search size={18} strokeWidth={1.5} />
+          </Link>
+
+          {/* Account */}
+          <Link
+            href={`${prefix}/account`}
+            className={`transition-colors duration-300 ${
+              isLight ? "text-white/80 hover:text-white" : "text-[#9a9a9a] hover:text-[#191E1B]"
+            }`}
+            title="Личный кабинет"
+          >
+            <User size={18} strokeWidth={1.5} />
           </Link>
 
           {/* Cart */}
