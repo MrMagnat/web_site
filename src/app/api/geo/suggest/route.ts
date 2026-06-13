@@ -37,13 +37,15 @@ async function fromDaData(q: string, token: string): Promise<Suggestion[]> {
   }));
 }
 
-async function fromNominatim(q: string): Promise<Suggestion[]> {
+async function fromNominatim(q: string, ozonOnly: boolean): Promise<Suggestion[]> {
   try {
+    // Для режима ПВЗ ищем именно точки Ozon в OSM (название «Озон»),
+    // обычные адреса при этом не показываем.
+    const queryText = ozonOnly ? `Озон ${q}` : q;
     const url =
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}` +
-      `&format=jsonv2&addressdetails=1&limit=8&countrycodes=ru&accept-language=ru`;
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryText)}` +
+      `&format=jsonv2&addressdetails=1&namedetails=1&limit=15&countrycodes=ru&accept-language=ru`;
     const res = await fetch(url, {
-      // Nominatim требует идентифицирующий User-Agent
       headers: { "User-Agent": "andruafamil.ru (shop address search)", "Accept-Language": "ru" },
     });
     if (!res.ok) return [];
@@ -53,16 +55,25 @@ async function fromNominatim(q: string): Promise<Suggestion[]> {
     const out: Suggestion[] = [];
     for (const r of data) {
       const a = r.address ?? {};
+      const name: string = r.name || r.namedetails?.name || "";
+
+      if (ozonOnly) {
+        // оставляем только реальные точки Ozon (по названию)
+        const hay = `${name} ${r.display_name ?? ""}`.toLowerCase();
+        if (!/озон|ozon/.test(hay)) continue;
+      }
+
       const city = a.city ?? a.town ?? a.village ?? a.municipality ?? a.suburb ?? "";
       const street = [a.road, a.house_number].filter(Boolean).join(", ");
-      const label =
-        [city, street].filter(Boolean).join(", ") || (r.display_name as string) || "";
-      if (label && !seen.has(label)) {
-        seen.add(label);
-        out.push({ label, detail: a.postcode });
-      }
+      const addr = [city, street].filter(Boolean).join(", ");
+      const label = ozonOnly
+        ? (addr || (r.display_name as string) || name)
+        : (addr || (r.display_name as string) || "");
+      if (!label || seen.has(label)) continue;
+      seen.add(label);
+      out.push({ label, detail: ozonOnly ? "Пункт выдачи Ozon" : a.postcode });
     }
-    return out;
+    return out.slice(0, 8);
   } catch {
     return [];
   }
@@ -70,13 +81,20 @@ async function fromNominatim(q: string): Promise<Suggestion[]> {
 
 export async function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get("q") ?? "").trim();
+  const type = req.nextUrl.searchParams.get("type"); // "pvz" — только точки Ozon
   if (q.length < 2) return NextResponse.json({ suggestions: [] });
 
   try {
+    if (type === "pvz") {
+      // Только пункты Ozon (из OSM), обычные адреса не показываем.
+      const suggestions = await fromNominatim(q, true);
+      return NextResponse.json({ suggestions });
+    }
+
+    // Обычные адреса (курьер и т.п.): DaData, иначе Nominatim
     const token = await getIntegration("dadata_token");
     let suggestions = token ? await fromDaData(q, token) : [];
-    // если DaData не настроена или ничего не вернула — запасной геокодер
-    if (suggestions.length === 0) suggestions = await fromNominatim(q);
+    if (suggestions.length === 0) suggestions = await fromNominatim(q, false);
     return NextResponse.json({ suggestions });
   } catch (error) {
     console.error("GET /api/geo/suggest error:", error);

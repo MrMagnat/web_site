@@ -38,7 +38,7 @@ export default function PvzSearch({ value, onChange, error }: Props) {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
-      const res = await fetch(`/api/geo/suggest?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+      const res = await fetch(`/api/geo/suggest?type=pvz&q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
       const data = await res.json();
       const list: Suggestion[] = data.suggestions ?? [];
       setResults(list);
@@ -81,7 +81,7 @@ export default function PvzSearch({ value, onChange, error }: Props) {
           value={query}
           onChange={handleInput}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder="Город, улица, дом — начните вводить"
+          placeholder="Город или улица — покажем пункты Ozon рядом"
           autoComplete="off"
           className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors pr-10 ${
             error ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
@@ -118,12 +118,12 @@ export default function PvzSearch({ value, onChange, error }: Props) {
 
       {!loading && query.trim().length >= 2 && results.length === 0 && open && (
         <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-[#e8e0da] shadow-lg px-4 py-3">
-          <p className="text-[13px] text-[#9a9a9a]">Ничего не найдено — уточните запрос</p>
+          <p className="text-[13px] text-[#9a9a9a]">Пункты Ozon здесь не найдены — уточните город/улицу</p>
         </div>
       )}
 
       <p className="mt-1.5 text-[11px] text-[#9a9a9a]">
-        Введите адрес рядом с нужным ПВЗ — подсказки появляются по мере ввода
+        Показываем только пункты выдачи Ozon. Выберите нужный из списка
       </p>
     </div>
   );
