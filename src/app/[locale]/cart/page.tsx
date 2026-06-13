@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,6 +7,7 @@ import { Plus, Minus, Trash2, Tag, X, ChevronRight, Check } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import CartAuth from "@/components/shop/CartAuth";
 
 const PvzSearch = dynamic(() => import("@/components/shop/PvzSearch"), { ssr: false });
 
@@ -99,6 +100,22 @@ export default function CartPage() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [customerToken, setCustomerToken] = useState<string | null>(null);
+
+  // Если покупатель уже вошёл — подставляем его данные и пропускаем авторизацию
+  useEffect(() => {
+    const t = localStorage.getItem("customer_token");
+    if (t) {
+      setCustomerToken(t);
+      const savedName = localStorage.getItem("customer_name") || "";
+      const savedPhone = localStorage.getItem("customer_phone") || "";
+      setForm((f) => ({
+        ...f,
+        name: f.name || savedName,
+        phone: f.phone || savedPhone,
+      }));
+    }
+  }, []);
 
   const sub = subtotal();
   const tot = total();
@@ -486,6 +503,16 @@ export default function CartPage() {
                 <div className="space-y-6">
                   <h2 className="font-prata text-[20px] text-[#191E1B] mb-6">Подтверждение заказа</h2>
 
+                  {!customerToken ? (
+                    <CartAuth
+                      defaultPhone={form.phone}
+                      onAuthed={(d) => {
+                        setCustomerToken(d.token);
+                        setForm((f) => ({ ...f, name: f.name || d.name, phone: d.phone || f.phone }));
+                      }}
+                    />
+                  ) : (
+                  <>
                   {/* Online payment info */}
                   <div className="border border-[#e8e0da] p-6 bg-[#F7F0EC] space-y-4">
                     <p className="text-[11px] tracking-[0.18em] uppercase text-[#9a9a9a]">Оплата</p>
@@ -584,6 +611,8 @@ export default function CartPage() {
                       {submitting ? "Переходим к оплате..." : `Перейти к оплате · ${tot.toLocaleString("ru-RU")} ₽`}
                     </button>
                   </div>
+                  </>
+                  )}
                 </div>
               )}
             </div>

@@ -89,6 +89,7 @@ export default function AccountPage() {
       if (res.ok && data.token) {
         localStorage.setItem("customer_token", data.token);
         localStorage.setItem("customer_name", data.name ?? "");
+        localStorage.setItem("customer_phone", phone);
         setToken(data.token);
         setName(data.name ?? "");
       } else {
@@ -104,6 +105,7 @@ export default function AccountPage() {
   function logout() {
     localStorage.removeItem("customer_token");
     localStorage.removeItem("customer_name");
+    localStorage.removeItem("customer_phone");
     setToken(null);
     setOrders(null);
     setPhone(""); setPassword("");
