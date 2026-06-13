@@ -37,34 +37,32 @@ async function fromDaData(q: string, token: string): Promise<Suggestion[]> {
   }));
 }
 
-async function fromPhoton(q: string): Promise<Suggestion[]> {
+async function fromNominatim(q: string): Promise<Suggestion[]> {
   try {
     const url =
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}` +
-      `&lang=ru&limit=12&lat=55.75&lon=37.62`;
-    const res = await fetch(url);
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}` +
+      `&format=jsonv2&addressdetails=1&limit=8&countrycodes=ru&accept-language=ru`;
+    const res = await fetch(url, {
+      // Nominatim требует идентифицирующий User-Agent
+      headers: { "User-Agent": "andruafamil.ru (shop address search)", "Accept-Language": "ru" },
+    });
     if (!res.ok) return [];
-    const data = await res.json();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const feats = (data.features ?? []).filter((f: any) => f.properties?.countrycode === "RU");
+    const data: any[] = await res.json();
     const seen = new Set<string>();
     const out: Suggestion[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const f of feats) {
-      const p = f.properties;
-      const city = p.city ?? p.locality ?? p.district ?? "";
-      const street = [p.street, p.housenumber].filter(Boolean).join(", ");
-      const name = p.name && p.name !== p.street ? p.name : "";
-      const label = [city, street || name, p.state]
-        .filter(Boolean)
-        .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i)
-        .join(", ");
+    for (const r of data) {
+      const a = r.address ?? {};
+      const city = a.city ?? a.town ?? a.village ?? a.municipality ?? a.suburb ?? "";
+      const street = [a.road, a.house_number].filter(Boolean).join(", ");
+      const label =
+        [city, street].filter(Boolean).join(", ") || (r.display_name as string) || "";
       if (label && !seen.has(label)) {
         seen.add(label);
-        out.push({ label, detail: p.postcode });
+        out.push({ label, detail: a.postcode });
       }
     }
-    return out.slice(0, 8);
+    return out;
   } catch {
     return [];
   }
@@ -76,7 +74,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const token = await getIntegration("dadata_token");
-    const suggestions = token ? await fromDaData(q, token) : await fromPhoton(q);
+    let suggestions = token ? await fromDaData(q, token) : [];
+    // если DaData не настроена или ничего не вернула — запасной геокодер
+    if (suggestions.length === 0) suggestions = await fromNominatim(q);
     return NextResponse.json({ suggestions });
   } catch (error) {
     console.error("GET /api/geo/suggest error:", error);
