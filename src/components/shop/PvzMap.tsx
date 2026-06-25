@@ -1,248 +1,142 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    L: any;
-    _pvzSelect?: (addr: string) => void;
-  }
-}
+/**
+ * Выбор пункта выдачи Ozon на карте (Leaflet + OpenStreetMap, без API-ключей).
+ * Метки — реальные точки Ozon из OSM. Клик по метке → выбор пункта.
+ */
+interface PvzPoint { id: string; label: string; lat: number; lon: number }
 
-interface OsmElement {
-  id: number;
-  lat: number;
-  lon: number;
-  tags: Record<string, string>;
-}
+// Иконка-маркер (без зависимости от картинок leaflet, чтобы не ломались пути в бандле)
+const icon = L.divIcon({
+  className: "",
+  html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:#3F1111;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
+  iconSize: [26, 26],
+  iconAnchor: [13, 26],
+  popupAnchor: [0, -24],
+});
 
-function loadLeaflet(): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.L) { resolve(); return; }
-
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => resolve();
-    document.head.appendChild(script);
-  });
-}
-
-async function fetchPvz(lat: number, lon: number): Promise<OsmElement[]> {
-  const r = 20000; // 20 km radius
-  const query = `
-    [out:json][timeout:25];
-    (
-      node["brand"~"^[Оо]zon$|^OZON$"](around:${r},${lat},${lon});
-      node["operator"~"[Оо]zon|OZON"](around:${r},${lat},${lon});
-      node["name"~"[Оо]zon|OZON"](around:${r},${lat},${lon});
-    );
-    out body;
-  `.trim();
-
-  const res = await fetch(
-    `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
-    { signal: AbortSignal.timeout(20000) }
-  );
-  const data = await res.json();
-  return (data.elements ?? []) as OsmElement[];
-}
-
-function buildAddress(pt: OsmElement): string {
-  const tags = pt.tags;
-  const street = tags["addr:street"] ?? "";
-  const house  = tags["addr:housenumber"] ?? "";
-  const city   = tags["addr:city"] ?? tags["addr:place"] ?? "";
-  const name   = tags["name"] ?? tags["brand"] ?? "Ozon ПВЗ";
-
-  const streetPart = [street, house].filter(Boolean).join(", ");
-  const addrPart   = [city, streetPart].filter(Boolean).join(", ");
-  return addrPart || name;
+function Recenter({ points }: { points: PvzPoint[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length === 0) return;
+    if (points.length === 1) {
+      map.setView([points[0].lat, points[0].lon], 14);
+    } else {
+      map.fitBounds(points.map((p) => [p.lat, p.lon]) as [number, number][], { padding: [40, 40] });
+    }
+  }, [points, map]);
+  return null;
 }
 
 interface Props {
-  onSelect: (address: string) => void;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
 }
 
-export default function PvzMap({ onSelect }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null);
-  const [status, setStatus] = useState<"loading" | "ok" | "empty" | "error">("loading");
-  const [cityInput, setCityInput] = useState("");
+export default function PvzMap({ value, onChange, error }: Props) {
+  const [query, setQuery] = useState("");
+  const [points, setPoints] = useState<PvzPoint[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  async function initMap(lat: number, lon: number) {
-    if (!containerRef.current) return;
-
-    // Destroy old instance if exists
-    if (mapRef.current) {
-      mapRef.current.remove();
-      mapRef.current = null;
-    }
-
-    setStatus("loading");
-
+  const search = async (q: string) => {
+    if (q.trim().length < 2) { setPoints([]); setSearched(false); return; }
+    setLoading(true);
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
-      await loadLeaflet();
-      const L = window.L;
-
-      const map = L.map(containerRef.current).setView([lat, lon], 13);
-      mapRef.current = map;
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
-
-      // Blue Ozon marker
-      const ozonIcon = L.divIcon({
-        className: "",
-        html: `<div style="width:30px;height:30px;border-radius:50%;background:#005BFF;border:3px solid #fff;
-          box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;
-          justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:sans-serif">О</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -18],
-      });
-
-      const points = await fetchPvz(lat, lon);
-
-      if (points.length === 0) {
-        setStatus("empty");
-      } else {
-        setStatus("ok");
-      }
-
-      window._pvzSelect = (addr: string) => {
-        onSelect(addr);
-        map.closePopup();
-      };
-
-      for (const pt of points) {
-        const addr = buildAddress(pt);
-        const safeAddr = addr.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-
-        L.marker([pt.lat, pt.lon], { icon: ozonIcon })
-          .addTo(map)
-          .bindPopup(
-            `<div style="font-family:sans-serif;min-width:180px;padding:2px 0">
-              <p style="font-size:13px;font-weight:600;margin:0 0 4px;color:#191E1B">Ozon ПВЗ</p>
-              <p style="font-size:12px;color:#666;margin:0 0 10px;line-height:1.4">${addr}</p>
-              <button
-                onclick="window._pvzSelect('${safeAddr}')"
-                style="background:#005BFF;color:#fff;border:none;padding:7px 0;border-radius:6px;
-                  cursor:pointer;font-size:12px;width:100%;font-weight:500"
-              >Выбрать этот ПВЗ</button>
-            </div>`,
-            { maxWidth: 220 }
-          );
-      }
-
-      // Add user location marker
-      L.circleMarker([lat, lon], {
-        radius: 7,
-        color: "#3F1111",
-        fillColor: "#3F1111",
-        fillOpacity: 0.8,
-        weight: 2,
-      }).addTo(map).bindPopup("Вы здесь");
-    } catch {
-      setStatus("error");
-    }
-  }
-
-  useEffect(() => {
-    // Try geolocation, default to Moscow
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => initMap(pos.coords.latitude, pos.coords.longitude),
-        () => initMap(55.7522, 37.6156), // Moscow
-        { timeout: 6000 }
-      );
-    } else {
-      initMap(55.7522, 37.6156);
-    }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      delete window._pvzSelect;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleCitySearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!cityInput.trim()) return;
-    // Geocode city via Nominatim (OpenStreetMap free geocoder)
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityInput)}&format=json&limit=1&countrycodes=ru`,
-        { headers: { "Accept-Language": "ru" } }
-      );
+      const res = await fetch(`/api/geo/pvz?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
       const data = await res.json();
-      if (data[0]) {
-        initMap(parseFloat(data[0].lat), parseFloat(data[0].lon));
-      }
-    } catch { /* ignore */ }
+      setPoints(data.points ?? []);
+      setSearched(true);
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") setPoints([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setQuery(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => search(v), 500);
   };
 
   return (
-    <div className="border border-[#e8e0da] overflow-hidden">
-      {/* City search bar */}
-      <form
-        onSubmit={handleCitySearch}
-        className="flex gap-0 border-b border-[#e8e0da]"
-      >
+    <div>
+      <label className="block text-[11px] tracking-[0.16em] uppercase text-[#9a9a9a] mb-1.5">
+        Пункт выдачи Ozon
+      </label>
+
+      <div className="relative mb-3">
         <input
           type="text"
-          value={cityInput}
-          onChange={(e) => setCityInput(e.target.value)}
-          placeholder="Введите город для поиска ПВЗ…"
-          className="flex-1 px-4 py-2.5 text-[13px] outline-none bg-[#FAFAFA]"
+          value={query}
+          onChange={handleInput}
+          placeholder="Введите город или район — покажем пункты Ozon на карте"
+          autoComplete="off"
+          className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors pr-10 ${
+            error ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
+          }`}
         />
-        <button
-          type="submit"
-          className="px-4 py-2.5 bg-[#005BFF] text-white text-[12px] tracking-wide hover:bg-[#0047cc] transition-colors whitespace-nowrap"
-        >
-          Найти
-        </button>
-      </form>
+        {loading && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+            <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9a9a" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeOpacity=".25"/>
+              <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/>
+            </svg>
+          </span>
+        )}
+      </div>
 
-      {/* Status overlay */}
-      {status === "loading" && (
-        <div className="flex items-center justify-center h-[350px] bg-[#F7F0EC]">
-          <p className="text-[13px] text-[#9a9a9a] animate-pulse">Загрузка карты…</p>
-        </div>
-      )}
-      {status === "error" && (
-        <div className="flex items-center justify-center h-[350px] bg-[#F7F0EC]">
-          <p className="text-[13px] text-[#9a9a9a]">Не удалось загрузить карту. Введите адрес ПВЗ вручную.</p>
-        </div>
-      )}
+      {/* Карта */}
+      <div className="rounded-lg overflow-hidden border" style={{ borderColor: "#e8e0da", height: 320 }}>
+        <MapContainer center={[55.751, 37.618]} zoom={10} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap"
+          />
+          <Recenter points={points} />
+          {points.map((p) => (
+            <Marker key={p.id} position={[p.lat, p.lon]} icon={icon}>
+              <Popup>
+                <div style={{ minWidth: 160 }}>
+                  <p style={{ fontWeight: 600, marginBottom: 6 }}>{p.label}</p>
+                  <button
+                    type="button"
+                    onClick={() => onChange(p.label)}
+                    style={{ background: "#3F1111", color: "#fff", padding: "6px 12px", border: 0, borderRadius: 6, cursor: "pointer", fontSize: 12 }}
+                  >
+                    {value === p.label ? "✓ Выбран" : "Выбрать этот пункт"}
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
 
-      {/* Map container (always rendered so Leaflet has a DOM node) */}
-      <div
-        ref={containerRef}
-        style={{ height: 350 }}
-        className={status === "loading" || status === "error" ? "hidden" : ""}
-      />
+      {error && <p className="mt-1 text-[11px] text-[#3F1111]">{error}</p>}
 
-      {/* Empty state hint */}
-      {status === "empty" && (
-        <p className="text-[12px] text-[#9a9a9a] px-4 py-2 bg-[#F7F0EC] border-t border-[#e8e0da]">
-          В этом районе ПВЗ не найдены. Попробуйте другой город или введите адрес вручную.
+      {value && (
+        <p className="mt-2 text-[12px]" style={{ color: "#191E1B" }}>
+          Выбран пункт: <span className="font-medium">{value}</span>
         </p>
       )}
-
-      <p className="text-[11px] text-[#9a9a9a] px-4 py-2 border-t border-[#e8e0da] bg-[#FAFAFA]">
-        Нажмите на синюю точку → «Выбрать этот ПВЗ»
+      {searched && points.length === 0 && !loading && (
+        <p className="mt-2 text-[12px] text-[#9a9a9a]">Пункты Ozon здесь не найдены — уточните город/район</p>
+      )}
+      <p className="mt-1.5 text-[11px] text-[#9a9a9a]">
+        Найдите на карте удобный пункт Ozon и нажмите «Выбрать»
       </p>
     </div>
   );

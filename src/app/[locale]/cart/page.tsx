@@ -9,7 +9,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CartAuth from "@/components/shop/CartAuth";
 
-const PvzSearch = dynamic(() => import("@/components/shop/PvzSearch"), { ssr: false });
+const PvzMap = dynamic(() => import("@/components/shop/PvzMap"), { ssr: false });
 
 type Step = 1 | 2 | 3;
 type DeliveryType = "ozon-pvz" | "ozon-courier";
@@ -455,7 +455,7 @@ export default function CartPage() {
                   </div>
 
                   {form.deliveryType === "ozon-pvz" ? (
-                    <PvzSearch
+                    <PvzMap
                       value={form.pvzAddress}
                       onChange={(v) => setForm((f) => ({ ...f, pvzAddress: v }))}
                       error={errors.pvzAddress}
