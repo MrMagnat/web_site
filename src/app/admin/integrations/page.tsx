@@ -27,6 +27,7 @@ export default function AdminIntegrationsPage() {
   const [sections, setSections] = useState<IntegrationSection[]>([
     { id: "tbank", title: "Т-Банк (оплата)", expanded: true },
     { id: "ozon", title: "Ozon Логистика", expanded: false },
+    { id: "yamap", title: "Яндекс.Карты + ПВЗ Ozon", expanded: false },
     { id: "dadata", title: "DaData (подсказки адресов)", expanded: false },
     { id: "promo", title: "Промокоды", expanded: false },
   ]);
@@ -41,6 +42,13 @@ export default function AdminIntegrationsPage() {
   const [daToken, setDaToken] = useState("");
   const [daSaving, setDaSaving] = useState(false);
   const [daMsg, setDaMsg] = useState("");
+
+  // Яндекс.Карты + ПВЗ Ozon
+  const [yaMapKey, setYaMapKey]       = useState("");
+  const [ozonPClientId, setOzonPClientId] = useState("");
+  const [ozonPSecret, setOzonPSecret] = useState("");
+  const [yaSaving, setYaSaving]       = useState(false);
+  const [yaMsg, setYaMsg]             = useState("");
 
   // Ozon
   const [ozonClientId, setOzonClientId] = useState("");
@@ -76,6 +84,10 @@ export default function AdminIntegrationsPage() {
         if (intg.tbank_password) setTbankPassword("");
         // токен DaData замаскирован — поле оставляем пустым
         if (intg.dadata_token) setDaToken("");
+        if (intg.yandex_maps_key) setYaMapKey(intg.yandex_maps_key);
+        if (intg.ozon_principal_client_id) setOzonPClientId(intg.ozon_principal_client_id);
+        // client_secret замаскирован — поле пустое
+        if (intg.ozon_principal_client_secret) setOzonPSecret("");
       }
     }
     load();
@@ -138,6 +150,22 @@ export default function AdminIntegrationsPage() {
     setDaMsg("Сохранено");
     setTimeout(() => setDaMsg(""), 3000);
     setDaSaving(false);
+  }
+
+  async function saveYaMap() {
+    setYaSaving(true);
+    const headers = getAuthHeaders();
+    const post = (key: string, value: string) =>
+      fetch("/api/admin/integrations", { method: "POST", headers, body: JSON.stringify({ key, value }) });
+    const reqs: Promise<Response>[] = [];
+    if (yaMapKey) reqs.push(post("yandex_maps_key", yaMapKey));
+    if (ozonPClientId) reqs.push(post("ozon_principal_client_id", ozonPClientId));
+    if (ozonPSecret) reqs.push(post("ozon_principal_client_secret", ozonPSecret));
+    await Promise.all(reqs);
+    setOzonPSecret("");
+    setYaMsg("Сохранено");
+    setTimeout(() => setYaMsg(""), 3000);
+    setYaSaving(false);
   }
 
   async function saveOzon() {
@@ -461,6 +489,82 @@ export default function AdminIntegrationsPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Яндекс.Карты + ПВЗ Ozon ──────────────────────────── */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between px-5 py-4 text-left"
+            onClick={() => toggleSection("yamap")}
+          >
+            <span className="text-sm font-semibold" style={{ color: "#191E1B" }}>
+              Яндекс.Карты + ПВЗ Ozon
+            </span>
+            {sections.find((s) => s.id === "yamap")?.expanded ? (
+              <ChevronUp size={16} style={{ color: "#9a9a9a" }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: "#9a9a9a" }} />
+            )}
+          </button>
+          {sections.find((s) => s.id === "yamap")?.expanded && (
+            <div className="px-5 pb-5 border-t" style={{ borderColor: "#F7F0EC" }}>
+              <div className="mt-4 mb-5 px-4 py-3 rounded-lg flex gap-3"
+                style={{ background: "#F7F0EC", borderLeft: "3px solid #3F1111" }}>
+                <Info size={15} className="flex-shrink-0 mt-0.5" style={{ color: "#3F1111" }} />
+                <div className="text-[12px] leading-relaxed" style={{ color: "#9a9a9a" }}>
+                  <p className="font-medium mb-0.5" style={{ color: "#191E1B" }}>
+                    Карта с пунктами выдачи Ozon
+                  </p>
+                  <p>
+                    Ключ Яндекс.Карт — на{" "}
+                    <a href="https://developer.tech.yandex.ru/" target="_blank" rel="noopener noreferrer"
+                      className="underline" style={{ color: "#3F1111" }}>developer.tech.yandex.ru</a>{" "}
+                    (JavaScript API). Доступ к API пунктов Ozon (client_id / client_secret) — в кабинете Ozon Логистики.
+                    Секрет хранится в БД зашифрованным.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className={labelStyle} style={{ color: "#191E1B" }}>Ключ Яндекс.Карт (JS API)</label>
+                <input type="text" value={yaMapKey}
+                  onChange={(e) => setYaMapKey(e.target.value)}
+                  placeholder="00000000-0000-0000-0000-000000000000" className={inputCls} style={inputStyle} />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelStyle} style={{ color: "#191E1B" }}>Ozon client_id</label>
+                  <input type="text" value={ozonPClientId}
+                    onChange={(e) => setOzonPClientId(e.target.value)}
+                    placeholder="client_id" className={inputCls} style={inputStyle} />
+                </div>
+                <div>
+                  <label className={labelStyle} style={{ color: "#191E1B" }}>Ozon client_secret</label>
+                  <input type="password" value={ozonPSecret}
+                    onChange={(e) => setOzonPSecret(e.target.value)}
+                    placeholder="Оставьте пустым, чтобы не менять" className={inputCls} style={inputStyle} />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mt-4">
+                <button onClick={saveYaMap} disabled={yaSaving}
+                  className="px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
+                  style={{ background: "#3F1111", color: "#FAFAFA" }}>
+                  {yaSaving ? "Сохранение..." : "Сохранить"}
+                </button>
+                {yaMsg && (
+                  <span className="text-sm flex items-center gap-1" style={{ color: "#10b981" }}>
+                    <Check size={14} /> {yaMsg}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-[11px] mt-3" style={{ color: "#9a9a9a" }}>
+                После сохранения ключей подключим карту с метками ПВЗ Ozon в корзине.
+              </p>
             </div>
           )}
         </div>
