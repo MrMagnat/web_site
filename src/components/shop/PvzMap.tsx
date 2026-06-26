@@ -1,35 +1,33 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 /**
- * Выбор пункта выдачи Ozon на карте (Leaflet + OpenStreetMap, без API-ключей).
- * Метки — реальные точки Ozon из OSM. Клик по метке → выбор пункта.
+ * Выбор пункта выдачи Ozon на Яндекс.Картах (JS API v2.1).
+ * Ключ берётся с сервера (/api/geo/maps-key). Метки — точки Ozon (/api/geo/pvz).
+ * Клик по метке → выбор пункта.
+ *
+ * Если ключ Яндекс.Карт не задан в админке — показываем список выбора
+ * (чтобы оформление не ломалось) и подсказку добавить ключ.
  */
 interface PvzPoint { id: string; label: string; lat: number; lon: number }
 
-// Иконка-маркер (без зависимости от картинок leaflet, чтобы не ломались пути в бандле)
-const icon = L.divIcon({
-  className: "",
-  html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:#3F1111;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-  popupAnchor: [0, -24],
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global { interface Window { ymaps?: any } }
 
-function Recenter({ points }: { points: PvzPoint[] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (points.length === 0) return;
-    if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lon], 14);
-    } else {
-      map.fitBounds(points.map((p) => [p.lat, p.lon]) as [number, number][], { padding: [40, 40] });
-    }
-  }, [points, map]);
-  return null;
+let ymapsLoader: Promise<unknown> | null = null;
+function loadYmaps(key: string): Promise<unknown> {
+  if (typeof window === "undefined") return Promise.reject();
+  if (window.ymaps) return Promise.resolve(window.ymaps);
+  if (ymapsLoader) return ymapsLoader;
+  ymapsLoader = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = `https://api-maps.yandex.ru/2.1/?apikey=${encodeURIComponent(key)}&lang=ru_RU`;
+    s.async = true;
+    s.onload = () => window.ymaps.ready(() => resolve(window.ymaps));
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return ymapsLoader;
 }
 
 interface Props {
@@ -43,10 +41,77 @@ export default function PvzMap({ value, onChange, error }: Props) {
   const [points, setPoints] = useState<PvzPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [mapKey, setMapKey] = useState<string | null>(null); // null=загружается, ""=нет ключа
+  const [mapReady, setMapReady] = useState(false);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const mapElRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
-  const search = async (q: string) => {
+  // 1. Получаем ключ
+  useEffect(() => {
+    fetch("/api/geo/maps-key")
+      .then((r) => r.json())
+      .then((d) => setMapKey(d.key ?? ""))
+      .catch(() => setMapKey(""));
+  }, []);
+
+  // 2. Инициализируем карту, когда есть ключ и контейнер
+  useEffect(() => {
+    if (!mapKey || mapReady) return;
+    let cancelled = false;
+    loadYmaps(mapKey).then((ymaps) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ym = ymaps as any;
+      if (cancelled || !mapElRef.current || mapRef.current) return;
+      mapRef.current = new ym.Map(mapElRef.current, {
+        center: [55.751, 37.618],
+        zoom: 9,
+        controls: ["zoomControl", "geolocationControl"],
+      });
+      setMapReady(true);
+    }).catch(() => {/* ключ неверный/не загрузился */});
+    return () => { cancelled = true; };
+  }, [mapKey, mapReady]);
+
+  // 3. Рисуем метки при изменении точек
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !window.ymaps) return;
+    const ym = window.ymaps;
+    const map = mapRef.current;
+    map.geoObjects.removeAll();
+    if (points.length === 0) return;
+
+    points.forEach((p) => {
+      const pm = new ym.Placemark(
+        [p.lat, p.lon],
+        { balloonContentHeader: "Пункт выдачи Ozon", balloonContentBody: p.label },
+        { preset: "islands#violetDotIcon" }
+      );
+      pm.events.add("click", () => onChangeRef.current(p.label));
+      map.geoObjects.add(pm);
+    });
+
+    if (points.length === 1) {
+      map.setCenter([points[0].lat, points[0].lon], 14);
+    } else {
+      const lats = points.map((p) => p.lat);
+      const lons = points.map((p) => p.lon);
+      map.setBounds(
+        [
+          [Math.min(...lats), Math.min(...lons)],
+          [Math.max(...lats), Math.max(...lons)],
+        ],
+        { checkZoomRange: true, zoomMargin: 30 }
+      );
+    }
+  }, [points, mapReady]);
+
+  const search = useCallback(async (q: string) => {
     if (q.trim().length < 2) { setPoints([]); setSearched(false); return; }
     setLoading(true);
     abortRef.current?.abort();
@@ -62,7 +127,7 @@ export default function PvzMap({ value, onChange, error }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
@@ -70,6 +135,8 @@ export default function PvzMap({ value, onChange, error }: Props) {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => search(v), 500);
   };
+
+  const noKey = mapKey === "";
 
   return (
     <div>
@@ -82,7 +149,7 @@ export default function PvzMap({ value, onChange, error }: Props) {
           type="text"
           value={query}
           onChange={handleInput}
-          placeholder="Введите город или район — покажем пункты Ozon на карте"
+          placeholder="Введите город или район — покажем пункты Ozon"
           autoComplete="off"
           className={`w-full border px-4 py-3 text-[14px] bg-transparent outline-none transition-colors pr-10 ${
             error ? "border-[#3F1111]" : "border-[#e8e0da] focus:border-[#191E1B]"
@@ -98,32 +165,26 @@ export default function PvzMap({ value, onChange, error }: Props) {
         )}
       </div>
 
-      {/* Карта */}
-      <div className="rounded-lg overflow-hidden border" style={{ borderColor: "#e8e0da", height: 320 }}>
-        <MapContainer center={[55.751, 37.618]} zoom={10} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap"
-          />
-          <Recenter points={points} />
+      {/* Карта Яндекса (если есть ключ) */}
+      {!noKey && (
+        <div ref={mapElRef} className="rounded-lg overflow-hidden border"
+          style={{ borderColor: "#e8e0da", height: 340, background: "#eef0f1" }} />
+      )}
+
+      {/* Запасной список выбора, если карта без ключа */}
+      {noKey && points.length > 0 && (
+        <ul className="border border-[#e8e0da] divide-y divide-[#f0ebe6] max-h-64 overflow-y-auto">
           {points.map((p) => (
-            <Marker key={p.id} position={[p.lat, p.lon]} icon={icon}>
-              <Popup>
-                <div style={{ minWidth: 160 }}>
-                  <p style={{ fontWeight: 600, marginBottom: 6 }}>{p.label}</p>
-                  <button
-                    type="button"
-                    onClick={() => onChange(p.label)}
-                    style={{ background: "#3F1111", color: "#fff", padding: "6px 12px", border: 0, borderRadius: 6, cursor: "pointer", fontSize: 12 }}
-                  >
-                    {value === p.label ? "✓ Выбран" : "Выбрать этот пункт"}
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
+            <li key={p.id}>
+              <button type="button" onClick={() => onChange(p.label)}
+                className="w-full text-left px-4 py-2.5 hover:bg-[#F7F0EC] transition-colors">
+                <span className="text-[13px] text-[#191E1B]">{p.label}</span>
+                {value === p.label && <span className="text-[11px] text-[#3F1111] ml-2">✓ выбран</span>}
+              </button>
+            </li>
           ))}
-        </MapContainer>
-      </div>
+        </ul>
+      )}
 
       {error && <p className="mt-1 text-[11px] text-[#3F1111]">{error}</p>}
 
@@ -135,9 +196,17 @@ export default function PvzMap({ value, onChange, error }: Props) {
       {searched && points.length === 0 && !loading && (
         <p className="mt-2 text-[12px] text-[#9a9a9a]">Пункты Ozon здесь не найдены — уточните город/район</p>
       )}
-      <p className="mt-1.5 text-[11px] text-[#9a9a9a]">
-        Найдите на карте удобный пункт Ozon и нажмите «Выбрать»
-      </p>
+      {noKey && (
+        <p className="mt-2 text-[11px] text-[#9a9a9a]">
+          Карта появится после добавления ключа Яндекс.Карт в Админке → Интеграции.
+          Пока можно выбрать пункт из списка выше.
+        </p>
+      )}
+      {!noKey && (
+        <p className="mt-1.5 text-[11px] text-[#9a9a9a]">
+          Найдите на карте удобный пункт Ozon и нажмите по метке → «Пункт выдачи Ozon»
+        </p>
+      )}
     </div>
   );
 }
