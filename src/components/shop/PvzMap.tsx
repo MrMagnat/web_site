@@ -117,40 +117,37 @@ export default function PvzMap({ value, onChange, error }: Props) {
     const map = mapRef.current;
     map.geoObjects.removeAll();
     points.forEach((p) => {
+      const selected = valueRef.current === p.label;
       const pm = new ym.Placemark(
         [p.lat, p.lon],
-        { balloonContentHeader: "Пункт выдачи Ozon", balloonContentBody: p.label,
-          balloonContentFooter: `<button onclick="window.__selectPvz && window.__selectPvz(${JSON.stringify(p.label)})" style="background:#3F1111;color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer">Выбрать</button>` },
-        { preset: "islands#violetDotIcon" }
+        {
+          balloonContentHeader: p.label,
+          balloonContentBody: selected ? "✓ Этот пункт выбран" : "Нажмите на метку, чтобы выбрать этот пункт",
+          hintContent: p.label,
+        },
+        { preset: selected ? "islands#redDotIcon" : "islands#violetDotIcon" }
       );
-      pm.events.add("click", () => {
-        // открываем балун; выбор — по кнопке в балуне или по списку
-      });
+      // Клик по метке = выбор пункта (надёжно, без кнопки в балуне)
+      pm.events.add("click", () => onChangeRef.current(p.label));
       map.geoObjects.add(pm);
     });
-  }, [points, mapReady]);
+  }, [points, mapReady, value]);
 
-  // Глобальный коллбэк для кнопки в балуне
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__selectPvz = (label: string) => onChangeRef.current(label);
-    return () => { try { delete (window as any).__selectPvz; } catch {} };
-  }, []);
-
-  // Поиск города → центрируем карту (точки догрузятся сами по boundschange)
+  // Поиск города → центрируем карту и догружаем точки
   const handleSearch = () => {
     const q = query.trim();
-    if (!q) return;
-    if (mapReady && window.ymaps) {
-      window.ymaps.geocode(q, { results: 1 }).then((res: unknown) => {
+    if (!q || !mapReady || !window.ymaps || !mapRef.current) return;
+    window.ymaps
+      .geocode(q, { results: 1, boundedBy: undefined })
+      .then((res: unknown) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const obj = (res as any).geoObjects.get(0);
-        if (obj && mapRef.current) mapRef.current.setCenter(obj.geometry.getCoordinates(), 12);
-      });
-    } else {
-      // карты нет (нет ключа) — ищем списком через текстовый запрос
-      fetchPoints(`/api/geo/pvz?q=${encodeURIComponent(q)}`);
-    }
+        if (!obj) return;
+        mapRef.current.setCenter(obj.geometry.getCoordinates(), 12);
+        // не полагаемся только на boundschange — грузим точки явно
+        setTimeout(loadByMap, 400);
+      })
+      .catch(() => {});
   };
 
   const selectPoint = (p: PvzPoint) => {
