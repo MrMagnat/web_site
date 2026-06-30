@@ -68,7 +68,9 @@ export async function getPvzInfo(ids: number[]): Promise<Record<number, PvzInfo>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const p of (data.points ?? []) as any[]) {
         const dm = p.delivery_method ?? {};
-        out[p.map_point_id] = {
+        const id = dm.map_point_id; // id лежит внутри delivery_method
+        if (id == null) continue;
+        out[id] = {
           address: dm.address ?? "",
           city: dm.address_details?.city ?? dm.address_details?.region ?? "",
         };
