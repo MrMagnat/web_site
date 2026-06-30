@@ -133,21 +133,26 @@ export default function PvzMap({ value, onChange, error }: Props) {
     });
   }, [points, mapReady, value]);
 
-  // Поиск города → центрируем карту и догружаем точки
-  const handleSearch = () => {
+  // Поиск города — на сервере (геокод + точки Ozon рядом), без геокодера Яндекса
+  const handleSearch = async () => {
     const q = query.trim();
-    if (!q || !mapReady || !window.ymaps || !mapRef.current) return;
-    window.ymaps
-      .geocode(q, { results: 1, boundedBy: undefined })
-      .then((res: unknown) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const obj = (res as any).geoObjects.get(0);
-        if (!obj) return;
-        mapRef.current.setCenter(obj.geometry.getCoordinates(), 12);
-        // не полагаемся только на boundschange — грузим точки явно
-        setTimeout(loadByMap, 400);
-      })
-      .catch(() => {});
+    if (!q) return;
+    setLoading(true);
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    try {
+      const res = await fetch(`/api/geo/pvz?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+      const data = await res.json();
+      setPoints(data.points ?? []);
+      if (data.center && mapRef.current) {
+        mapRef.current.setCenter([data.center.lat, data.center.lon], 12);
+      }
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") setPoints([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectPoint = (p: PvzPoint) => {

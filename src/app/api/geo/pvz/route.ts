@@ -8,14 +8,44 @@ import { getAllPvz, getPvzInfo } from "@/lib/ozonPvz";
  *
  * Ответ: { points: [{ id, label, lat, lon }] }
  */
+/** Геокод города через Nominatim (server-side) → [lat, lon] | null */
+async function geocodeCity(q: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const url =
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}` +
+      `&format=jsonv2&limit=1&countrycodes=ru&accept-language=ru`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "andruafamil.ru (pvz city search)", "Accept-Language": "ru" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.[0]) return null;
+    return { lat: Number(data[0].lat), lon: Number(data[0].lon) };
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const ll = req.nextUrl.searchParams.get("ll"); // "lon,lat"
     const spn = req.nextUrl.searchParams.get("spn"); // "dlon,dlat"
-    if (!ll) return NextResponse.json({ points: [] });
+    const q = (req.nextUrl.searchParams.get("q") ?? "").trim();
 
-    const [lonStr, latStr] = ll.split(",");
-    const cLon = Number(lonStr), cLat = Number(latStr);
+    let cLat: number, cLon: number;
+
+    if (q) {
+      // поиск по городу — геокодим на сервере
+      const geo = await geocodeCity(q);
+      if (!geo) return NextResponse.json({ points: [], center: null });
+      cLat = geo.lat; cLon = geo.lon;
+    } else if (ll) {
+      const [lonStr, latStr] = ll.split(",");
+      cLon = Number(lonStr); cLat = Number(latStr);
+    } else {
+      return NextResponse.json({ points: [] });
+    }
+
     if (!Number.isFinite(cLat) || !Number.isFinite(cLon)) {
       return NextResponse.json({ points: [] });
     }
@@ -46,7 +76,7 @@ export async function GET(req: NextRequest) {
       lon: p.lon,
     }));
 
-    return NextResponse.json({ points });
+    return NextResponse.json({ points, center: { lat: cLat, lon: cLon } });
   } catch (error) {
     console.error("GET /api/geo/pvz error:", error);
     return NextResponse.json({ points: [] });
