@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/adminAuth";
+import { deleteLocalUpload } from "@/lib/uploads";
 
 export async function GET(
   request: NextRequest,
@@ -69,11 +70,22 @@ export async function PUT(
     // связь коллекции: пустая строка → null
     if ("collectionId" in data) data.collectionId = data.collectionId || null;
 
+    // Удаляем с сервера картинки, которые убрали из товара
+    let removedImages: string[] = [];
+    if ("images" in data) {
+      const prev = await prisma.product.findUnique({ where: { id }, select: { images: true } });
+      const oldImgs: string[] = prev?.images ?? [];
+      const newImgs: string[] = data.images ?? [];
+      removedImages = oldImgs.filter((u) => !newImgs.includes(u));
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data,
       include: { category: true },
     });
+
+    for (const url of removedImages) await deleteLocalUpload(url);
 
     return NextResponse.json({ product });
   } catch (error) {
@@ -93,7 +105,9 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    const prev = await prisma.product.findUnique({ where: { id }, select: { images: true } });
     await prisma.product.delete({ where: { id } });
+    for (const url of prev?.images ?? []) await deleteLocalUpload(url);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
