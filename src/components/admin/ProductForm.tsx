@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Plus, X, GripVertical, Wand2 } from "lucide-react";
+import { Plus, X, GripVertical, Wand2, ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 interface ColorEntry {
   name: string;
@@ -178,6 +178,29 @@ export default function ProductForm({
 
   function set<K extends keyof ProductFormData>(key: K, val: ProductFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
+  }
+
+  // Управление порядком изображений (первое = главное)
+  function moveImage(from: number, to: number) {
+    setForm((prev) => {
+      if (to < 0 || to >= prev.images.length) return prev;
+      const imgs = [...prev.images];
+      const [m] = imgs.splice(from, 1);
+      imgs.splice(to, 0, m);
+      return { ...prev, images: imgs };
+    });
+  }
+  function makeMain(i: number) {
+    setForm((prev) => {
+      if (i <= 0) return prev;
+      const imgs = [...prev.images];
+      const [m] = imgs.splice(i, 1);
+      imgs.unshift(m);
+      return { ...prev, images: imgs };
+    });
+  }
+  function removeImage(i: number) {
+    setForm((prev) => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }));
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -421,39 +444,61 @@ export default function ProductForm({
           </p>
         </div>
         {form.images.length > 0 && (
-          <div className="flex flex-wrap gap-3 mt-4">
-            {form.images.map((img, i) => (
-              <div key={i} className="relative group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img}
-                  alt=""
-                  className="w-20 h-20 rounded-lg object-cover border"
-                  style={{ borderColor: "#e8e0da" }}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    set(
-                      "images",
-                      form.images.filter((_, idx) => idx !== i)
-                    )
-                  }
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={10} />
-                </button>
-                {i === 0 && (
-                  <span
-                    className="absolute bottom-1 left-1 text-[9px] px-1 rounded"
-                    style={{ background: "#3F1111", color: "#fff" }}
+          <>
+            <p className="text-[11px] mt-4 mb-2" style={{ color: "#9a9a9a" }}>
+              Первое фото — главное. Меняйте порядок стрелками, «★» — сделать главным.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {form.images.map((img, i) => (
+                <div key={img + i} className="relative group w-24">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img}
+                    alt=""
+                    className="w-24 h-24 rounded-lg object-cover border"
+                    style={{ borderColor: i === 0 ? "#3F1111" : "#e8e0da", borderWidth: i === 0 ? 2 : 1 }}
+                  />
+                  {/* удалить */}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    title="Удалить"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    Гл.
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+                    <X size={10} />
+                  </button>
+                  {/* главное фото / сделать главным */}
+                  {i === 0 ? (
+                    <span className="absolute top-1 left-1 text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5"
+                      style={{ background: "#3F1111", color: "#fff" }}>
+                      <Star size={8} /> Главное
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => makeMain(i)} title="Сделать главным"
+                      className="absolute top-1 left-1 w-5 h-5 rounded bg-white/90 border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ borderColor: "#e8e0da" }}>
+                      <Star size={11} style={{ color: "#3F1111" }} />
+                    </button>
+                  )}
+                  {/* порядок ← → */}
+                  <div className="flex justify-center gap-1 mt-1">
+                    <button type="button" onClick={() => moveImage(i, i - 1)} disabled={i === 0}
+                      title="Левее"
+                      className="w-7 h-6 rounded border flex items-center justify-center disabled:opacity-30"
+                      style={{ borderColor: "#e8e0da", color: "#191E1B" }}>
+                      <ChevronLeft size={13} />
+                    </button>
+                    <button type="button" onClick={() => moveImage(i, i + 1)} disabled={i === form.images.length - 1}
+                      title="Правее"
+                      className="w-7 h-6 rounded border flex items-center justify-center disabled:opacity-30"
+                      style={{ borderColor: "#e8e0da", color: "#191E1B" }}>
+                      <ChevronRight size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

@@ -28,6 +28,9 @@ $DC --profile tools run --rm --build migrate
 # Затем пересобираем и перезапускаем приложение
 $DC up -d --build
 
+# Перезапускаем nginx, чтобы применить изменения конфига (bind-mount не перечитывается сам)
+$DC restart nginx || true
+
 echo ""
 echo "✓ Деплой завершён! Сайт: https://andruafamil.ru"
 echo "✓ Админка: https://andruafamil.ru/admin/login"
