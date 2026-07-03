@@ -50,14 +50,28 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Normalize optional collection relation: empty string => null
-    if ("collectionId" in body) {
-      body.collectionId = body.collectionId || null;
-    }
+    // Явный белый список полей — исключаем лишние ключи (иначе Prisma падает
+    // и НИЧЕГО не сохраняется, в т.ч. характеристики).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = {};
+    const scalarKeys = [
+      "sku", "nameRu", "nameEn", "descriptionRu", "descriptionEn",
+      "price", "discountPrice", "categoryId", "collectionId",
+      "isNew", "isFeatured", "isActive",
+    ] as const;
+    for (const k of scalarKeys) if (k in body) data[k] = body[k];
+    // JSON / массивы
+    if ("images" in body)  data.images  = body.images  ?? [];
+    if ("sizes" in body)   data.sizes   = body.sizes   ?? [];
+    if ("colors" in body)  data.colors  = body.colors  ?? {};
+    if ("specsRu" in body) data.specsRu = body.specsRu ?? {};
+    if ("specsEn" in body) data.specsEn = body.specsEn ?? {};
+    // связь коллекции: пустая строка → null
+    if ("collectionId" in data) data.collectionId = data.collectionId || null;
 
     const product = await prisma.product.update({
       where: { id },
-      data: body,
+      data,
       include: { category: true },
     });
 
