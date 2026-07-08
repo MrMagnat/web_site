@@ -83,10 +83,11 @@ export default function Footer() {
         {/* Legal info */}
         <div className="border-t border-white/8 pt-6 mb-4">
           <p className="text-[11px] text-white/25 leading-relaxed">
-            ООО «АФ»&nbsp;&nbsp;·&nbsp;&nbsp;
+            ООО «Андруа Фамиль»&nbsp;&nbsp;·&nbsp;&nbsp;
             ОГРН&nbsp;1267700195795&nbsp;&nbsp;·&nbsp;&nbsp;
-            ИНН&nbsp;7710140679&nbsp;&nbsp;·&nbsp;&nbsp;
-            Юридический адрес: 127287, г. Москва, ул. Хуторская 2-я, д. 38А, стр. 2б
+            ИНН&nbsp;9729420867&nbsp;&nbsp;·&nbsp;&nbsp;
+            КПП&nbsp;772901001&nbsp;&nbsp;·&nbsp;&nbsp;
+            Юридический адрес: 119330, г. Москва, ул. Мосфильмовская, д. 37, к. 2, помещ. 3П
           </p>
         </div>
 
