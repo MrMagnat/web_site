@@ -38,9 +38,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Некорректная сумма заказа" }, { status: 400 });
     }
 
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-      request.nextUrl.origin;
+    // Домен берём из самого запроса (на каком домене покупатель — туда и
+    // вернём после оплаты). Так return-ссылки всегда совпадают с реальным
+    // доменом и не зависят от возможно устаревшего NEXT_PUBLIC_SITE_URL.
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const proto = request.headers.get("x-forwarded-proto") || "https";
+    const siteUrl = host
+      ? `${proto}://${host}`
+      : (process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || request.nextUrl.origin);
 
     const payment = await createTBankPayment({
       amountRub: order.total,
