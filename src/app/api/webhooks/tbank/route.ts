@@ -71,8 +71,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Отмена / отклонение
-    if (status === "REJECTED" || status === "CANCELED" || status === "DEADLINE_EXPIRED") {
+    // Отклонённая попытка (напр. недостаточно средств) — заказ НЕ отменяем,
+    // оставляем PENDING, чтобы покупатель мог оплатить повторно.
+    if (status === "REJECTED" || status === "AUTH_FAIL") {
+      console.log(`Заказ ${order.number}: попытка оплаты отклонена (${status}) — оставляем возможность повторить`);
+    }
+
+    // Явная отмена / истёк срок — отменяем заказ
+    if (status === "CANCELED" || status === "DEADLINE_EXPIRED") {
       await prisma.order.update({
         where: { id: order.id },
         data: { status: "CANCELLED" },

@@ -16,11 +16,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const orderId: string | undefined = body.orderId;
-    if (!orderId) {
-      return NextResponse.json({ error: "orderId обязателен" }, { status: 400 });
+    const orderNumber: string | undefined = body.orderNumber;
+    if (!orderId && !orderNumber) {
+      return NextResponse.json({ error: "orderId или orderNumber обязателен" }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = orderId
+      ? await prisma.order.findUnique({ where: { id: orderId } })
+      : await prisma.order.findFirst({ where: { number: orderNumber } });
 
     if (!order) {
       return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
